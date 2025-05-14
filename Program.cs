@@ -1,10 +1,24 @@
 using RegistroTecnico.Components;
+using RegistroTecnico.DAL;
+using Microsoft.EntityFrameworkCore;
+using RegistroTecnico.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+
+builder.Services.AddRazorPages();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
+var Constr = builder.Configuration.GetConnectionString("PostgreSqlConnection");
+builder.Services.AddDbContextFactory<Contexto>(options =>
+    options.UseNpgsql(Constr));
+
+builder.Services.AddBlazorBootstrap();
 
 var app = builder.Build();
 
