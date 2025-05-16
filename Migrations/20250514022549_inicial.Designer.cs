@@ -12,9 +12,9 @@ namespace RegistroTecnico.Migrations
 {
     [DbContext(typeof(Contexto))]
     [Migration("20250514022549_inicial")]
-    partial class inicial
+    partial class Inicial
     {
-        /// <inheritdoc />
+        
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
