@@ -1,5 +1,76 @@
-﻿<h3>Delete</h3>
+﻿@page "/Tecnico/Delete"
+@page "/Tecnico/Delete/{tecnicosId:int}"
+@inject TecnicoService tecnicoService
+@inject NavigationManager navigation
+@rendermode InteractiveServer
+
+
+<PageTitle>Eliminar tipo de t&eacute;cnico</PageTitle>
+<EditForm Model="tecnico" OnValidSubmit="Eliminar">
+    <DataAnnotationsValidator />
+    <div class="container">
+        <div class="card shadow-lg">
+            @*Header*@
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title m-0">Tipo tecnico</h5>
+            </div>
+
+            @*Body*@
+            <div class="card-body">
+                <h7><strong>¿Est&aacute;s seguro de que quieres eliminar este t&eacute;cnico?</strong></h7>
+                @*Datos*@
+                <div class="mb-1">
+                    <p class="mb-0">T&eacute;cnicoId: @tecnico?.TecnicoId</p>
+                </div>
+                <div class="mb-1">
+                    <p class="mb-0">Nombre: @tecnico?.Nombre </p>
+                </div>
+                <div class="mb-1">
+                    <p class="mb-0">Sueldo Hora: @tecnico?.SueldoHora</p>
+                </div>
+            </div>
+
+            @*Footer*@
+            <div class="card-footer text-center mt-3">
+                <a type="button" href="/Tecnico/Index/" class="btn btn-outline-danger"><span class="bi bi-arrow-bar-left"></span> Volver </a>
+                <button type="button" class="btn btn-outline-danger ml-2" @onclick="Eliminar"><span class="bi bi-check-circle-fill"></span> Eliminar </button>
+            </div>
+        </div>
+    </div>
+
+    </EditForm>
+
 
 @code {
+    [Parameter]
+    public int tecnicosId { get; set; }
+    public Tecnicos? tecnico { get; set; } = new Tecnicos();
+    [Inject] protected ToastService? ToastService { get; set; }
 
+    protected override async Task OnInitializedAsync()
+    {
+        if (tecnicosId > 0)
+        {
+            tecnico = await tecnicoService.Buscar(tecnicosId);
+        }
+    }
+    public async Task Eliminar()
+    {
+        if (tecnico != null)
+        {
+            var eliminar = await tecnicoService.Eliminar(tecnicosId);
+            if (eliminar)
+            {
+                ToastService?.Notify(new(ToastType.Success,"Exito", $"Técnico eliminado correctamente."));
+                navigation.NavigateTo("/Tecnico/Index");
+            }
+            else
+            {
+                ToastService?.Notify(new(ToastType.Danger,"Eliminar", $"Error al eliminar tecnico."));
+
+            }
+        }
+    }
 }
+
+
