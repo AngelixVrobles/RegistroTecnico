@@ -1,5 +1,96 @@
-﻿<h3>Edit</h3>
+﻿@page "/Tecnico/Edit"
+@page "/Tecnico/Edit/{tecnicosId:int}"
+@rendermode InteractiveServer
+@inject TecnicoService tecnicoService
+@inject NavigationManager navigation 
+
+<PageTitle>Modificar</PageTitle>
+
+<EditForm Model="tecnico" OnValidSubmit= "Modificar">
+
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header text-center">
+                <h5 class="card-title">Modificar</h5>
+            </div>
+
+            <div class="card-body">
+
+                @*Id*@ 
+                <div class="mb-3">
+                    <label class="form-label"><strong>TecnicoId</strong></label>
+                    <InputNumber class="form-control" @bind-Value="tecnico.TecnicoId" READONLY></InputNumber>
+                </div>
+
+                @*Nombres*@ 
+                <div class="mb-3">
+                    <label class="form-label" for="nombres"><strong>Nombre</strong></label>
+                    <InputText id="nombres" class="form-control" @bind-Value="tecnico.Nombres"></InputText>
+                    <ValidationMessage For="@(()=> tecnico.Nombres)"></ValidationMessage>
+                </div>
+
+                @*Sueldo Hora*@ 
+                <div class="mb-3">
+                    <label class="form-label" for="sueldo"><strong>Sueldo por hora</strong></label>
+                    <InputNumber id="sueldo" class="form-control" @bind-Value="tecnico.SueldoHora"></InputNumber>
+                    <ValidationMessage For="@(()=> tecnico.SueldoHora)"></ValidationMessage>
+                </div>
+            </div>
+
+            @*footer *@ 
+            <div class="card-footer text-center mt-3">
+                <a type="button" href="/Tecnico/Index/" class="btn btn-outline-danger"><span class="bi bi-arrow-bar-left"></span> Volver </a>
+                <button type="submit" class="btn btn-outline-success ml-2"><span class="bi bi-check-circle-fill"></span> Guardar </button>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+
 
 @code {
+    [Parameter]
+    public int tecnicosId { get; set; }
+    public Tecnicos? tecnico { get; set; } = new Tecnicos();
+    public bool NombreRepetido { get; set; }
+    [Inject] protected ToastService? ToastService { get; set; }
 
+    protected override async Task OnInitializedAsync()
+    {
+        if (tecnicosId > 0)
+        {
+            tecnico = await tecnicoService.Buscar(tecnicosId);
+        }
+    }
+
+    public async Task Modificar()
+    {
+        if (!await Validar())
+        {
+            await tecnicoService.Guardar(tecnico);
+
+            if (ToastService != null)
+        {
+            ToastService.Notify(new(ToastType.Success,"Exito", $"Técnico modificado correctamente."));
+            navigation.NavigateTo("/Tecnico/Index");
+        }
+
+        else
+        {
+            var currentTime = DateTime.Now.ToString("HH:mm:ss");
+            ToastService.Notify(new(ToastType.Danger, "Error", $"Ya existe un técnico con ese nombre."));
+        }
+    }
+
+    public async Task<bool> Validar()
+    {
+        var existeTecnico = await tecnicoService.BuscarNombres(tecnico.Nombre);
+
+        NombreRepetido = existeTecnico != null;
+        return NombreRepetido;
+    }
+
+  }
 }
