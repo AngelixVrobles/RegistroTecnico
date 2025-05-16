@@ -1,5 +1,91 @@
-﻿<h3>Create</h3>
+﻿@page "/Tecnico/Create"
+@inject TecnicoService tecnicoServices
+@inject NavigationManager navigation
+@rendermode InteractiveServer
+
+<PageTitle>Create</PageTitle>
+    <EditForm Model="tecnico" OnValidSubmit="Crear">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="container">
+        <div class="card shadow p-3">
+            <div class="card-header text-center" style="background-color: #0d6efd; color: white;">
+                <h3 class="card-title">Registro de Tecnicos</h3>
+            </div>
+
+        <div class="card-body">
+                @*Id*@
+                <div class="mb-3">
+                    <label class="form-label"><strong>TecnicoId</strong></label>
+                    <InputNumber class="form-control" @bind-Value="tecnico.TecnicoId" READONLY></InputNumber>
+                </div>
+
+                @*Nombres*@
+                <div class="mb-3">
+                    <label class="form-label" for="nombres"><strong>Nombre</strong></label>
+                    <InputText id="nombres" class="form-control" @bind-Value="tecnico.Nombre"></InputText>
+                    <ValidationMessage For="@(()=> tecnico.Nombre)"></ValidationMessage>
+                </div>
+
+                @*Sueldo Hora*@
+                <div class="mb-3">
+                    <label class="form-label" for="sueldo"><strong>Sueldo por hora</strong></label>
+                    <InputNumber id="sueldo" class="form-control" @bind-Value="tecnico.SueldoHora"></InputNumber>
+                    <ValidationMessage For="@(()=> tecnico.SueldoHora)"></ValidationMessage>
+                </div>
+
+                </div>
+
+        @* footer *@
+        <div class="card-footer text-center mt-3">
+            <button type="button" class="btn btn-outline-primary ml-2" @onclick="Nuevo"><span class="bi bi-plus"></span> Nuevo </button>
+            <button type="submit" class="btn btn-outline-success ml-2"><span class="bi bi-check-circle-fill"></span> Guardar </button>
+            <a type="button" href="/Tecnico/Index/" class="btn btn-outline-danger"><span class="bi bi-arrow-bar-left"></span> Volver </a>
+        </div>
+    </div>
+    </div>
+
+
+    </EditForm>
 
 @code {
+    public Tecnicos tecnico { get; set; } = new Tecnicos();
+    public bool NombreRepetido { get; set; }
+    [Inject] protected ToastService? ToastService { get; set; } 
 
+    public async Task Crear()
+    {
+        if (!await Validar())
+        {
+            await tecnicoServices.Guardar(tecnico);
+
+            if (ToastService != null)
+            {
+                ToastService.Notify(new(ToastType.Success, "Exito", $"Técnico Creado correctamente."));
+            }
+            tecnico = new Tecnicos();
+            navigation.NavigateTo("/Tecnico/Index");
+
+        }
+        else
+        {
+            if (ToastService != null)
+            {
+                ToastService.Notify(new(ToastType.Danger, "Error", $"Ya existe un técnico con ese nombre."));
+            }
+        }
+    }
+    public void Nuevo()
+    {
+        tecnico = new Tecnicos();
+    }
+    public async Task<bool> Validar()
+    {
+        if (tecnico.Nombre == null)
+        {
+            return true;
+        }
+        var existeTecnico = await tecnicoServices.BuscarNombres(tecnico.Nombre);
+        return existeTecnico != null;
+    }
 }
