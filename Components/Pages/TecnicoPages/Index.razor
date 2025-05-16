@@ -65,7 +65,7 @@
                         <td>@tecnico.Nombre</td>
                         <td>@tecnico.SueldoHora.ToString("N2")</td>
                         <td class="text-center">
-                            <a href="/Tecnico/Edit/@tecnico.TecnicoId" class="btn btn-outline-primary bi bi-pencil-square"></a>
+                                <a href="/Tecnico/Edit/@tecnico.TecnicoId" class="btn btn-outline-secondary bi bi-pencil-fill" style="border-color: #3BC035; color: #3BC035;"></a>
                         </td>
                         <td class="text-center">
                             <a href="/Tecnico/Delete/@tecnico.TecnicoId" class="btn btn-outline-danger bi bi-trash"></a>
@@ -98,7 +98,7 @@
             }
             else if (filtro == "Nombres")
             {
-                tecnicos = await tecnicoService.Listar(t => t.Nombre.ToLower().Contains(valorFiltro.ToLower()));
+                tecnicos = await tecnicoService.Listar(t => t.Nombre != null && t.Nombre.ToLower().Contains(valorFiltro.ToLower()));
             }
             else if (filtro == "SueldoHora" && float.TryParse(valorFiltro, out float SueldoHora))
             {
