@@ -50,42 +50,38 @@
 
 @code {
     public Tecnicos tecnico { get; set; } = new Tecnicos();
-    public bool NombreRepetido { get; set; }
-    [Inject] protected ToastService? ToastService { get; set; } 
+
+    [Inject] protected ToastService? ToastService { get; set; }
 
     public async Task Crear()
     {
-        if (!await Validar())
+        if (await Validar())
         {
             await tecnicoServices.Guardar(tecnico);
 
-            if (ToastService != null)
-            {
-                ToastService.Notify(new(ToastType.Success, "Exito", $"Técnico Creado correctamente."));
-            }
+            ToastService?.Notify(new(ToastType.Success, "Éxito", "Técnico creado correctamente."));
+
             tecnico = new Tecnicos();
             navigation.NavigateTo("/Tecnico/Index");
-
         }
         else
         {
-            if (ToastService != null)
-            {
-                ToastService.Notify(new(ToastType.Danger, "Error", $"Ya existe un técnico con ese nombre."));
-            }
+            ToastService?.Notify(new(ToastType.Danger, "Error", "No se pudo guardar: ya existe un técnico con ese nombre."));
         }
     }
+
     public void Nuevo()
     {
         tecnico = new Tecnicos();
     }
+
     public async Task<bool> Validar()
     {
-        if (tecnico.Nombre == null)
-        {
-            return true;
-        }
+        if (string.IsNullOrWhiteSpace(tecnico.Nombre))
+            return false;
+
         var existeTecnico = await tecnicoServices.BuscarNombres(tecnico.Nombre);
-        return existeTecnico != null;
+
+        return existeTecnico == null;
     }
 }
