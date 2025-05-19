@@ -11,24 +11,24 @@
     <DataAnnotationsValidator />
     <ValidationSummary />
     <div class="container">
-        <div class="card shadow-lg">
-            <div class="card-header text-center">
-                <h5 class="card-title">Modificar</h5>
+        <div class="card shadow p-3">
+            <div class="card-header text-center" style="background-color: #1C8D0F; color: white;">
+                <h3 class="card-title">Modificar Tecnico</h3>
             </div>
 
             <div class="card-body">
 
                 @*Id*@ 
                 <div class="mb-3">
-                    <label class="form-label"><strong>TecnicoId</strong></label>
+                    <label class="form-label"><strong>TecnicosId</strong></label>
                     <InputNumber class="form-control" @bind-Value="tecnico.TecnicoId" READONLY></InputNumber>
                 </div>
 
                 @*Nombres*@ 
                 <div class="mb-3">
                     <label class="form-label" for="nombres"><strong>Nombre</strong></label>
-                    <InputText id="nombres" class="form-control" @bind-Value="tecnico.Nombres"></InputText>
-                    <ValidationMessage For="@(()=> tecnico.Nombres)"></ValidationMessage>
+                    <InputText id="nombres" class="form-control" @bind-Value="tecnico.Nombre"></InputText>
+                    <ValidationMessage For="@(()=> tecnico.Nombre)"></ValidationMessage>
                 </div>
 
                 @*Sueldo Hora*@ 
@@ -66,23 +66,24 @@
     }
 
     public async Task Modificar()
+{
+    if (!await Validar())
     {
-        if (!await Validar())
-        {
-            await tecnicoService.Guardar(tecnico);
+        await tecnicoService.Guardar(tecnico);
 
-            if (ToastService != null)
+        if (ToastService != null)
         {
-            ToastService.Notify(new(ToastType.Success,"Exito", $"Técnico modificado correctamente."));
+            ToastService.Notify(new(ToastType.Success, "Exito", $"Técnico modificado correctamente."));
             navigation.NavigateTo("/Tecnico/Index");
-        }
-
-        else
-        {
-            var currentTime = DateTime.Now.ToString("HH:mm:ss");
-            ToastService.Notify(new(ToastType.Danger, "Error", $"Ya existe un técnico con ese nombre."));
+               
         }
     }
+    else
+    {
+        var currentTime = DateTime.Now.ToString("HH:mm:ss");
+        ToastService.Notify(new(ToastType.Danger, "Error", $"Ya existe un técnico con ese nombre."));
+    }
+}
 
     public async Task<bool> Validar()
     {
@@ -93,4 +94,4 @@
     }
 
   }
-}
+
