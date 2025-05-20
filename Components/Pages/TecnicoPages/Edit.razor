@@ -1,5 +1,6 @@
 ﻿@page "/Tecnico/Edit/{tecnicosId:int}"
 @rendermode InteractiveServer
+@using BlazorBootstrap
 @inject TecnicoService tecnicoService
 @inject NavigationManager navigation
 
@@ -18,7 +19,7 @@
             <div class="card-body">
                 @* Id *@ 
                 <div class="mb-3">
-                    <label class="form-label"><strong>Tecnico ID</strong></label>
+                    <label class="form-label"><strong>Tecnico Id</strong></label>
                     <InputNumber class="form-control" @bind-Value="tecnico.TecnicoId" readonly></InputNumber>
                 </div>
 
@@ -38,19 +39,22 @@
             </div>
 
             @* Footer *@ 
-            <div class="card-footer text-center mt-3">
-                <a type="button" href="/Tecnico/Index/" class="btn btn-outline-danger">
-                    <span class="bi bi-arrow-bar-left"></span> Volver
-                </a>
-
+            <div class="card-footer text-center mt-2">
+         
+                @* Botón de guardar *@
                 <button type="submit" class="btn btn-outline-success ml-2">
                     <span class="bi bi-check-circle-fill"></span> Guardar
                 </button>
-
                 @* Botón de eliminar *@
                 <button type="button" class="btn btn-outline-danger ml-2" @onclick="Eliminar">
                     <span class="bi bi-trash-fill"></span> Eliminar
                 </button>
+                @* Botón de Volver *@
+                <a type="button" href="/Tecnico/Index/" class="btn btn-secondary">
+                    <i class="bi bi-arrow-bar-left"></i> Volver
+                </a>
+                
+
             </div>
         </div>
     </div>
@@ -60,6 +64,8 @@
     [Parameter] public int tecnicosId { get; set; }
     public Tecnicos? tecnico { get; set; } = new Tecnicos();
     public bool NombreRepetido { get; set; }
+
+    private string? nombreOriginal;
 
     [Inject] protected ToastService? ToastService { get; set; }
 
@@ -73,23 +79,34 @@
 
     public async Task Modificar()
     {
-        if (!await Validar())
+        bool nombreCambiado = tecnico?.Nombres != nombreOriginal;
+
+        if (!nombreCambiado || !await Validar())
         {
             await tecnicoService.Guardar(tecnico);
 
-            ToastService?.Notify(new(ToastType.Success, "Éxito", $"Técnico modificado correctamente."));
+            ToastService?.Notify(new(ToastType.Success, "Éxito", "Técnico modificado correctamente."));
             navigation.NavigateTo("/Tecnico/Index");
         }
         else
         {
-            ToastService?.Notify(new(ToastType.Danger, "Error", $"Ya existe un técnico con ese nombre."));
+            ToastService?.Notify(new(ToastType.Danger, "Error", "Ya existe un técnico con ese nombre."));
         }
     }
 
     public async Task<bool> Validar()
     {
         var existeTecnico = await tecnicoService.BuscarNombres(tecnico.Nombres);
-        NombreRepetido = existeTecnico != null;
+
+        if (existeTecnico != null && existeTecnico.TecnicoId != tecnico.TecnicoId)
+        {
+            NombreRepetido = true;
+        }
+        else
+        {
+            NombreRepetido = false;
+        }
+
         return NombreRepetido;
     }
 
