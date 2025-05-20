@@ -42,18 +42,20 @@
                 <div class="col-4">
                     <div class="input-group">
                         <input class="form-control" @bind="valorFiltro" placeholder="Buscar" />
-                        <button type="button" class="btn btn-primary bi bi-search" @onclick="Buscar" style="border-radius: 1; border-right: 1px solid #0d6efd;">Buscar</button>
+                        <button type="button" class="btn btn-primary rounded-1 border-end border-primary bi bi-search" @onclick="Buscar">
+                            Buscar
+                        </button>
                     </div>
                 </div>
             </div>
               <table class="table table-hover table-bordered text-center mt-4">
-                <thead class="table table-striped text-black" ;">
+                <thead class="table table-striped text-black" >
             <tr>
                     <th class="fw-semibold">Tecnico Id</th>
                     <th class="fw-semibold">Nombres</th>
                     <th class="fw-semibold">Sueldo por Hora</th>
                     <th class="fw-semibold">Editar</th>
-
+     
                 </tr>
             </thead>
 
@@ -65,7 +67,7 @@
                         <td>@tecnico.Nombres</td>
                         <td>@tecnico.SueldoHora.ToString("N2")</td>
                         <td class="text-center">
-                                <a href="/Tecnico/Edit/@tecnico.TecnicoId" class="btn btn-outline-secondary bi bi-pencil-fill" style="border-color: #3BC035; color: #32DC29;"></a>
+                                <a href="/Tecnico/Edit/@tecnico.TecnicoId" class="btn btn-outline-success bi bi-pencil-fill"></a>
                         </td>
                     </tr>
                 }
