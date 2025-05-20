@@ -13,7 +13,7 @@ namespace RegistroTecnico.Models
         [RegularExpression(@"^[a-zA-Z\s]+$", ErrorMessage = "No se permiten numeros.")]
         [Required(ErrorMessage = "Nombre obligatorio")]
 
-        public string? Nombre { get; set; }
+        public string? Nombres { get; set; }
         [Required(ErrorMessage = "Introducir el sueldo hora del tecnico.")]
         [Range(1, 2000000, ErrorMessage = "El sueldo hora debe ser mayor a 1 y menor a 2000000")]
 

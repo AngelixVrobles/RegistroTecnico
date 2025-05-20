@@ -33,8 +33,8 @@
                 <div class="col-3">
                     <InputSelect class="form-select" @bind-Value="filtro">
                         <option value="" selected disabled>Elija una opción</option>
-                        <option value="Id">TecnicoId</option>
-                        <option value="Nombre">Nombre</option>
+                        <option value="Id">Tecnico Id</option>
+                        <option value="Nombres">Nombres</option>
                         <option value="SueldoHora">SueldoHora</option>
                     </InputSelect>
                 </div>
@@ -42,18 +42,20 @@
                 <div class="col-4">
                     <div class="input-group">
                         <input class="form-control" @bind="valorFiltro" placeholder="Buscar" />
-                        <button type="button" class="btn btn-primary bi bi-search" @onclick="Buscar" style="border-radius: 1; border-right: 1px solid #0d6efd;">Buscar</button>
+                        <button type="button" class="btn btn-primary rounded-1 border-end border-primary bi bi-search" @onclick="Buscar">
+                            Buscar
+                        </button>
                     </div>
                 </div>
             </div>
               <table class="table table-hover table-bordered text-center mt-4">
-                <thead class="table table-striped text-black" style="border-bottom: 3px solid #1C8D0F;">
+                <thead class="table table-striped text-black" >
             <tr>
-                    <th class="fw-semibold">TecnicoId</th>
+                    <th class="fw-semibold">Tecnico Id</th>
                     <th class="fw-semibold">Nombres</th>
                     <th class="fw-semibold">Sueldo por Hora</th>
                     <th class="fw-semibold">Editar</th>
-                    <th class="fw-semibold">Eliminar</th>
+     
                 </tr>
             </thead>
 
@@ -62,13 +64,10 @@
                 {
                     <tr>
                         <td>@tecnico.TecnicoId</td>
-                        <td>@tecnico.Nombre</td>
+                        <td>@tecnico.Nombres</td>
                         <td>@tecnico.SueldoHora.ToString("N2")</td>
                         <td class="text-center">
-                                <a href="/Tecnico/Edit/@tecnico.TecnicoId" class="btn btn-outline-secondary bi bi-pencil-fill" style="border-color: #3BC035; color: #3BC035;"></a>
-                        </td>
-                        <td class="text-center">
-                            <a href="/Tecnico/Delete/@tecnico.TecnicoId" class="btn btn-outline-danger bi bi-trash"></a>
+                                <a href="/Tecnico/Edit/@tecnico.TecnicoId" class="btn btn-outline-success bi bi-pencil-fill"></a>
                         </td>
                     </tr>
                 }
@@ -85,6 +84,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadTecnicos();
+    }
+
+    private async Task LoadTecnicos()
+    {
         tecnicos = await tecnicoService.Listar(t => true);
     }
 
@@ -92,13 +96,13 @@
     {
         if (!string.IsNullOrWhiteSpace(valorFiltro))
         {
-            if (filtro == "id" && int.TryParse(valorFiltro, out int TecnicoId))
+            if (filtro == "Id" && int.TryParse(valorFiltro, out int TecnicoId))
             {
                 tecnicos = await tecnicoService.Listar(t => t.TecnicoId == TecnicoId);
             }
-            else if (filtro == "Nombres")
+            else if (filtro == "Nombre")
             {
-                tecnicos = await tecnicoService.Listar(t => t.Nombre != null && t.Nombre.ToLower().Contains(valorFiltro.ToLower()));
+                tecnicos = await tecnicoService.Listar(t => t.Nombres != null && t.Nombres.ToLower().Contains(valorFiltro.ToLower()));
             }
             else if (filtro == "SueldoHora" && float.TryParse(valorFiltro, out float SueldoHora))
             {
@@ -107,7 +111,7 @@
         }
         else
         {
-            tecnicos = await tecnicoService.Listar(p => true);
+            await LoadTecnicos();
         }
     }
 }
