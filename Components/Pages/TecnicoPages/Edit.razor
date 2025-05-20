@@ -27,8 +27,8 @@
                 @*Nombres*@ 
                 <div class="mb-3">
                     <label class="form-label" for="nombres"><strong>Nombre</strong></label>
-                    <InputText id="nombres" class="form-control" @bind-Value="tecnico.Nombre"></InputText>
-                    <ValidationMessage For="@(()=> tecnico.Nombre)"></ValidationMessage>
+                    <InputText id="nombres" class="form-control" @bind-Value="tecnico.Nombres"></InputText>
+                    <ValidationMessage For="@(()=> tecnico.Nombres)"></ValidationMessage>
                 </div>
 
                 @*Sueldo Hora*@ 
@@ -87,7 +87,7 @@
 
     public async Task<bool> Validar()
     {
-        var existeTecnico = await tecnicoService.BuscarNombres(tecnico.Nombre);
+        var existeTecnico = await tecnicoService.BuscarNombres(tecnico.Nombres);
 
         NombreRepetido = existeTecnico != null;
         return NombreRepetido;
