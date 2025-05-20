@@ -7,10 +7,10 @@
     <EditForm Model="tecnico" OnValidSubmit="Crear">
         <DataAnnotationsValidator />
         <ValidationSummary />
-        <div class="container">
-        <div class="card shadow p-3">
-            <div class="card-header text-center" style="background-color: #0d6efd; color: white;">
-                <h3 class="card-title">Registro de Tecnicos</h3>
+        <div class="container p-0">
+        <div class="card shadow">
+            <div class="card-header text-center bg-primary text-white">
+                <h3 class="card-title"><strong>Registro de Técnicos</strong></h3>
             </div>
 
         <div class="card-body">
@@ -23,8 +23,8 @@
                 @*Nombres*@
                 <div class="mb-3">
                     <label class="form-label" for="nombres"><strong>Nombre</strong></label>
-                    <InputText id="nombres" class="form-control" @bind-Value="tecnico.Nombre"></InputText>
-                    <ValidationMessage For="@(()=> tecnico.Nombre)"></ValidationMessage>
+                    <InputText id="nombres" class="form-control" @bind-Value="tecnico.Nombres"></InputText>
+                    <ValidationMessage For="@(()=> tecnico.Nombres)"></ValidationMessage>
                 </div>
 
                 @*Sueldo Hora*@
@@ -77,10 +77,10 @@
 
     public async Task<bool> Validar()
     {
-        if (string.IsNullOrWhiteSpace(tecnico.Nombre))
+        if (string.IsNullOrWhiteSpace(tecnico.Nombres))
             return false;
 
-        var existeTecnico = await tecnicoServices.BuscarNombres(tecnico.Nombre);
+        var existeTecnico = await tecnicoServices.BuscarNombres(tecnico.Nombres);
 
         return existeTecnico == null;
     }
