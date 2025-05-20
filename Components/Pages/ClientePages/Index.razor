@@ -1,6 +1,186 @@
 ﻿@page "/Cliente/Index"
-@inject Clei
+@inject ClienteService clienteService
+@inject TecnicoService tecnicoService
+@inject NavigationManager navigation
 
+
+<PageTitle>Clientes</PageTitle>
+<div class="container">
+    <div class="card shadow-lg">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title m-0">Registro de Clientes</h5>
+            <a href="/Cliente/Create" class="btn btn-primary">
+                <span class="bi bi-plus-square"></span> Crear
+            </a>
+        </div>
+
+        <div class="card-body">
+            @*labels*@
+            <div class="row">
+                @*Filtrar por*@
+                <div class="col-3">
+                    <label class="col-form-label"><strong>Filtrar por</strong></label>
+                </div>
+                @*ValorFiltro*@
+                <div class="col-4">
+                    <label class="col-form-label"><strong>Búsqueda</strong></label>
+                </div>
+                <div class="col-2">
+                    <label class="col-form-label"><strong>Desde</strong></label>
+                </div>
+                <div class="col-2">
+                    <label class="col-form-label"><strong>Hasta</strong></label>
+                </div>
+                <div class="col-1">
+                    <button type="button" class="btn btn-outline-secondary bi bi-arrow-counterclockwise"
+                    @onclick="Restablecer">
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+        @*Inputs y botones*@
+        <div class="row align-items-center">
+            @*filtro*@
+            <div class="col-3">
+                <InputSelect class="form-select" @bind-Value="filtro">
+                    <option value="" selected disabled>Elija una opción</option>
+                    <option value="id">ClienteId</option>
+                    <option value="Nombres">Nombres</option>
+                    <option value="Fecha">Fecha</option>
+                    <option value="Direccion">Direccion</option>
+                    <option value="RNC">RNC</option>
+                    <option value="Limite de Credito">Limite de Credito</option>
+                </InputSelect>
+            </div>
+
+            @*Busqueda*@
+            <div class="col-4">
+                <div class="input-group">
+                    <input class="form-control" @bind="valorFiltro" placeholder="Buscar" />
+                    <button type="button" class="btn btn-outline-primary bi bi-search" @onclick="Buscar"></button>
+                </div>
+            </div>
+            <div class="col-2">
+                <InputDate class="form-control" @bind-Value="Desde"></InputDate>
+            </div>
+            <div class="col-2">
+                <div class="input-group">
+                    <InputDate class="form-control" @bind-Value="Hasta"></InputDate>
+                </div>
+            </div>
+        </div>
+
+        <table class="table table-hover table-bordered text-center">
+            <thead class="table  table-striped text-black">
+                <tr>
+                    <th>Id</th>
+                    <th>Nombres</th>
+                    <th>Fecha</th>
+                    <th>Direccion</th>
+                    <th>Ciudad</th>
+                    <th>RNC</th>
+                    <th>LimiteCredito</th>
+                    <th>Tecnico</th>
+                    <th>Modificar</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cliente in Cliente)
+                {
+                    var Tecnico = Tecnicos.FirstOrDefault(t => t.TecnicoId == cliente.TecnicoId);
+                   
+
+                    <tr>
+                        <td>@cliente.ClienteId</td>
+                        <td>@cliente.Nombres</td>
+                        <td>@cliente.FechaIngreso</td>
+                        <td>@cliente.Direccion</td>
+                        <td>@cliente.RNC</td>
+                        <td>@cliente.LimiteCredito.ToString("N2")</td>
+                        <td>@(Tecnico?.Nombres ?? "no encontrado")</td>
+                        <td>
+                            <a href="/Cliente/Edit/@cliente.ClienteId" class="btn btn-outline-primary bi bi-pencil-square"></a>
+                        </td>
+                        <td class="text-center">
+                            <a href="/Cliente/Delete/@cliente.ClienteId" class="btn btn-outline-danger bi bi-trash"></a>
+                        </td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="card-footer space-between">
+            <label><strong>Cantidad: @Cliente.Count()</strong></label>
+            <label><strong>Total: @Cliente.Sum(c => c.LimiteCredito)</strong</label>
+        </div>
+    </div>
+</div>
 @code {
+    public List<Clientes> Cliente = new List<Clientes>();
+    public List<Tecnicos> Tecnicos = new List<Tecnicos>();
+    private string filtro = "";
+    private string valorFiltro = "";
+    public DateTime? Desde { get; set; } = null;
+    public DateTime? Hasta { get; set; } = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cliente = await clienteService.Listar(t=>true);
+        Tecnicos = await tecnicoService.Listar(t => true);
+        
+    }
+
+    private async Task Buscar()
+    {
+        if (!string.IsNullOrWhiteSpace(valorFiltro))
+        {
+            if (filtro == "id" && int.TryParse(valorFiltro, out int clienteId))
+            {
+                Cliente = await clienteService.Listar(c => c.ClienteId == clienteId);
+            }
+            else if (filtro == "Nombres")
+            {
+                Cliente = await clienteService.Listar(c => c.Nombres.ToLower().Contains(valorFiltro.ToLower()));
+            }
+            else if (filtro == "Fecha")
+            {
+                Cliente = await clienteService
+                .Listar(c => c.FechaIngreso >= Desde && c.FechaIngreso <= Hasta); ;
+            }
+            else if (filtro == "Asunto")
+            {
+                Cliente = await clienteService.Listar(c => c.Direccion.ToLower().Contains(valorFiltro.ToLower()));
+            }
+            else if (filtro == "Descripcion")
+            {
+                Cliente = await clienteService.Listar(c => c.RNC.ToLower().Contains(valorFiltro.ToLower()));
+            }
+            else if (filtro == "Limite de Credito" && decimal.TryParse(valorFiltro, out decimal limiteCredito))
+            {
+                Cliente = await clienteService.Listar(c => c.LimiteCredito == limiteCredito);
+            } 
+           
+
+
+        }
+        else
+        {
+            Cliente = await clienteService.Listar(p => true);
+        }
+    }
+
+    private async Task Restablecer()
+    {
+        Cliente = await clienteService.Listar(p => true);
+        filtro = "";
+        valorFiltro = "";
+        Desde = null;
+        Hasta = null;
+    }
 
 }
