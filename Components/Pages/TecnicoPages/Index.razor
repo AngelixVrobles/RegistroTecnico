@@ -6,9 +6,9 @@
 <PageTitle>Técnicos</PageTitle>
 
 <div class="container mt-3">
-    <div class="card shadow p-3">
+    <div class="card shadow-lg p-3">
         <div class="card-header mb-1 text-center bg-white border-0">
-            <h2 class="card-title">Consulta de Técnicos</h2>
+            <h2 class="card-title"><strong>Consulta de Técnicos</strong></h2>
         </div>
 
         <div class="card-body">
@@ -22,7 +22,7 @@
                     <label class="col-form-label"><strong>Búsqueda</strong></label>
                 </div>
                 <div class="col-5 text-end">
-                    <a href="/Tecnico/Create" class="btn btn-success" style="background-color:#1C8D0F; border: none;">
+                    <a href="/Tecnico/Create" class="btn btn-success">
                         <span class="bi bi-plus-square"></span> Crear
                     </a>
                 </div>
@@ -73,6 +73,10 @@
                 }
             </tbody>
         </table>
+        </div>
+        <div class="card-footer space-between">
+            <label><strong>Cantidad: @tecnicos.Count()</strong></label>
+            <label><strong>Total de Sueldos x Horas: @tecnicos.Sum(c => c.SueldoHora)</strong></label>
         </div>
     </div>
 </div>

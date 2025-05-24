@@ -2,6 +2,7 @@ using RegistroTecnico.Components;
 using RegistroTecnico.DAL;
 using Microsoft.EntityFrameworkCore;
 using RegistroTecnico.Services;
+using Blazored.Toast;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,11 +15,18 @@ builder.Services.AddRazorPages();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-var Constr = builder.Configuration.GetConnectionString("PostgreSqlConnection");
-builder.Services.AddDbContextFactory<Contexto>(options =>
-    options.UseNpgsql(Constr));
+var ConStr = builder.Configuration.GetConnectionString("ConStr");
+
+builder.Services.AddDbContextFactory<Contexto>(o => o.UseSqlServer(ConStr));
 
 builder.Services.AddBlazorBootstrap();
+
+//Inyeccion del services
+builder.Services.AddScoped<TecnicoService>();
+builder.Services.AddScoped<ClienteService>();
+builder.Services.AddBlazoredToast();
+
+
 
 var app = builder.Build();
 

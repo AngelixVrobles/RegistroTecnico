@@ -1,0 +1,167 @@
+﻿@page "/Cliente/Index"
+@inject ClienteService clienteService
+@inject TecnicoService tecnicoService
+@inject NavigationManager navigation
+@using System.Globalization
+
+<PageTitle>Clientes</PageTitle>
+
+<div class="container mt-3">
+    <div class="card shadow-lg">
+        <div class="card-header mb-1 text-center bg-white border-0">
+            <h2 class="card-title m-3"><strong>Registro de Clientes</strong></h2>
+        </div>
+
+        <a href="/Cliente/Create" class="btn btn-success mb-3">
+            <span class="bi bi-plus-square"></span> Crear
+        </a>
+
+        <div class="card-body">
+            <div class="row">
+                <div class="col-3">
+                    <label class="col-form-label ms-1"><strong>Filtrar por</strong></label>
+                </div>
+                <div class="col-4">
+                    <label class="col-form-label ms-1"><strong>Búsqueda</strong></label>
+                </div>
+                <div class="col-2">
+                    <label class="col-form-label ms-1"><strong>Desde</strong></label>
+                </div>
+                <div class="col-2">
+                    <label class="col-form-label ms-1"><strong>Hasta</strong></label>
+                </div>
+            </div>
+
+            <div class="row align-items-center mt-1">
+                <div class="col-3">
+                    <InputSelect class="form-select" @bind-Value="filtro">
+                        <option value="" disabled selected>Elija una opción</option>
+                        <option value="id">ClienteId</option>
+                        <option value="Nombres">Nombres</option>
+                        <option value="Fecha">Fecha</option>
+                        <option value="Direccion">Direccion</option>
+                        <option value="RNC">RNC</option>
+                        <option value="LimiteCredito">Límite de Crédito</option>
+                    </InputSelect>
+                </div>
+
+                <div class="col-4">
+                    <div class="input-group">
+                        <input class="form-control" @bind="valorFiltro" placeholder="Buscar" />
+                        <button type="button" class="btn btn-primary bi bi-search" @onclick="Buscar">
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-2">
+                    <InputDate class="form-control" @bind-Value="Desde"></InputDate>
+                </div>
+                <div class="col-2">
+                    <InputDate class="form-control" @bind-Value="Hasta"></InputDate>
+                </div>
+            </div>
+
+            @if (Cliente.Any())
+            {
+                <table class="table table-hover table-bordered text-center mt-4">
+                    <thead class="table-striped text-black">
+                        <tr>
+                            <th>Id</th>
+                            <th>Nombres</th>
+                            <th>Fecha</th>
+                            <th>Direccion</th>
+                            <th>RNC</th>
+                            <th>LimiteCredito</th>
+                            <th>Tecnico</th>
+                            <th>Editar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cliente in Cliente)
+                        {
+                            var tecnico = Tecnicos.FirstOrDefault(t => t.TecnicoId == cliente.TecnicoId);
+                            <tr>
+                                <td>@cliente.ClienteId</td>
+                                <td>@cliente.Nombres</td>
+                                <td>@cliente.FechaIngreso.ToShortDateString()</td>
+                                <td>@cliente.Direccion</td>
+                                <td>@cliente.RNC</td>
+                                <td>@cliente.LimiteCredito.ToString("N2", CultureInfo.InvariantCulture)</td>
+                                <td>@(tecnico?.Nombres ?? "No encontrado")</td>
+                                <td>
+                                    <a href="/Cliente/Edit/@cliente.ClienteId" class="btn btn-outline-success bi bi-pencil-fill"></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-warning text-center mt-4">No se encontraron resultados.</div>
+            }
+        </div>
+
+        <div class="card-footer space-between">
+            <label><strong>Cantidad: @Cliente.Count()</strong></label>
+            <label><strong>Limite de Credito Total: @Cliente.Sum(c => c.LimiteCredito)</strong></label>
+        </div>
+    </div>
+</div>
+
+@code {
+    public List<Clientes> Cliente = new();
+    public List<Tecnicos> Tecnicos = new();
+    private string filtro = "";
+    private string valorFiltro = "";
+    public DateTime? Desde { get; set; }
+    public DateTime? Hasta { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cliente = await clienteService.Listar(c => true);
+        Tecnicos = await tecnicoService.Listar(t => true);
+    }
+
+    private async Task Buscar()
+    {
+        List<Clientes> resultados = new();
+
+        if (filtro == "id" && int.TryParse(valorFiltro, out int id))
+        {
+            resultados = await clienteService.Listar(c => c.ClienteId == id);
+        }
+        else if (filtro == "Nombres")
+        {
+            resultados = await clienteService.Listar(c =>
+                !string.IsNullOrWhiteSpace(c.Nombres) &&
+                c.Nombres.ToLower().Contains(valorFiltro.ToLower()));
+        }
+        else if (filtro == "Direccion")
+        {
+            resultados = await clienteService.Listar(c =>
+                !string.IsNullOrWhiteSpace(c.Direccion) &&
+                c.Direccion.ToLower().Contains(valorFiltro.ToLower()));
+        }
+        else if (filtro == "RNC")
+        {
+            resultados = await clienteService.Listar(c =>
+                !string.IsNullOrWhiteSpace(c.RNC) &&
+                c.RNC.ToLower().Contains(valorFiltro.ToLower()));
+        }
+        else if (filtro == "LimiteCredito" && decimal.TryParse(valorFiltro, out decimal limite))
+        {
+            resultados = await clienteService.Listar(c => c.LimiteCredito == limite);
+        }
+        else if (filtro == "Fecha" && Desde.HasValue && Hasta.HasValue)
+        {
+            resultados = await clienteService.Listar(c =>
+                c.FechaIngreso.Date >= Desde.Value.Date &&
+                c.FechaIngreso.Date <= Hasta.Value.Date);
+        }
+
+        Cliente = resultados.Any() ? resultados : await clienteService.Listar(c => true);
+    }
+
+}

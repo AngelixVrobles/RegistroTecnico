@@ -1,0 +1,177 @@
+﻿@page "/Cliente/Edit/{ClienteId:int}"
+@inject TecnicoService tecnicoService
+@inject ClienteService clienteService
+@inject NavigationManager navigation
+@rendermode InteractiveServer
+
+<PageTitle>Editar Cliente</PageTitle>
+<EditForm Model="clientes" OnValidSubmit="Modificar">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header text-center bg-success text-white">
+                <h3 class="card-title"><strong>Editar Cliente</strong></h3>
+            </div>
+
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label"><strong>ClienteId</strong></label>
+                    <InputNumber class="form-control" @bind-Value="clientes.ClienteId" READONLY></InputNumber>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="nombres"><strong>Nombre</strong></label>
+                    <InputText id="nombres" class="form-control" @bind-Value="clientes.Nombres"></InputText>
+                    <ValidationMessage For="@(()=> clientes.Nombres)"></ValidationMessage>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Fecha</strong></label>
+                    <InputDate class="form-control" @bind-Value="clientes.FechaIngreso"></InputDate>
+                    <ValidationMessage For="@(()=> clientes.FechaIngreso)"></ValidationMessage>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Dirrecion</strong></label>
+                    <InputText class="form-control" @bind-Value="clientes.Direccion"></InputText>
+                    <ValidationMessage For="@(()=> clientes.Direccion)"></ValidationMessage>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>RNC</strong></label>
+                    <InputText class="form-control" @bind-Value="clientes.RNC"></InputText>
+                    <ValidationMessage For="@(()=> clientes.RNC)"></ValidationMessage>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Limite Credito</strong></label>
+                    <InputNumber class="form-control" @bind-Value="clientes.LimiteCredito"></InputNumber>
+                    <ValidationMessage For="@(()=> clientes.LimiteCredito)"></ValidationMessage>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Tecnico</strong></label>
+                    <div class="input-group">
+                        <InputSelect class="form-control form-select" @bind-Value="clientes.TecnicoId">
+                            <option value="0" selected disabled>Elija una opción</option>
+                            @foreach (var Tecnico in tecnicos)
+                            {
+                                <option value="@Tecnico.TecnicoId">@Tecnico.Nombres</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(()=> clientes.TecnicoId)"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center mt-3">
+                <button type="submit" class="btn btn-outline-success ml-2"><span class="bi bi-check-circle-fill"></span> Guardar </button>
+                <button type="button" class="btn btn-outline-danger ml-2" @onclick="Eliminar">
+                    <span class="bi bi-trash-fill"></span> Eliminar
+                </button>
+                <a type="button" href="/Cliente/Index/" class="btn btn-secondary">
+                    <i class="bi bi-arrow-bar-left"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int ClienteId { get; set; }
+    public Clientes clientes { get; set; } = new Clientes();
+    public List<Tecnicos> tecnicos { get; set; } = new List<Tecnicos>();
+    [Inject] protected ToastService ToastService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ClienteId > 0)
+        {
+            clientes = await clienteService.Buscar(ClienteId);
+            if (clientes == null)
+            {
+                navigation.NavigateTo("/Cliente/Index");
+                ToastService.Notify(new(ToastType.Warning, "Advertencia", "Cliente no encontrado."));
+                return;
+            }
+            tecnicos = await tecnicoService.Listar(t => true);
+        }
+        else
+        {
+            navigation.NavigateTo("/Cliente/Index");
+            ToastService.Notify(new(ToastType.Danger, "Error", "ID de cliente inválido."));
+        }
+    }
+
+    public async Task Modificar()
+    {
+        bool nombreYaExiste = false;
+        bool rncYaExiste = false;
+
+        var clienteOriginal = await clienteService.Buscar(ClienteId);
+
+        if (clienteOriginal != null)
+        {
+            if (clientes.Nombres != clienteOriginal.Nombres)
+            {
+                var clienteConMismoNombre = await clienteService.BuscarNombres(clientes.Nombres);
+                nombreYaExiste = (clienteConMismoNombre != null && clienteConMismoNombre.ClienteId != clientes.ClienteId);
+            }
+
+            if (clientes.RNC != clienteOriginal.RNC)
+            {
+                var clienteConMismoRnc = await clienteService.BuscarRNC(clientes.RNC);
+                rncYaExiste = (clienteConMismoRnc != null && clienteConMismoRnc.ClienteId != clientes.ClienteId);
+            }
+        }
+        else
+        {
+            nombreYaExiste = await clienteService.BuscarNombres(clientes.Nombres) != null;
+            rncYaExiste = await clienteService.BuscarRNC(clientes.RNC) != null;
+        }
+
+        if (nombreYaExiste || rncYaExiste)
+        {
+            if (nombreYaExiste && rncYaExiste)
+            {
+                ToastService.Notify(new(ToastType.Danger, "Error", $"Ya existe un cliente con ese nombre y RNC."));
+            }
+            else if (nombreYaExiste)
+            {
+                ToastService.Notify(new(ToastType.Danger, "Error", $"Ya existe un cliente con ese nombre."));
+            }
+            else if (rncYaExiste)
+            {
+                ToastService.Notify(new(ToastType.Danger, "Error", $"Ya existe un cliente con ese RNC."));
+            }
+        }
+        else
+        {
+            var guardadoExitoso = await clienteService.Guardar(clientes);
+            if (guardadoExitoso)
+            {
+                ToastService.Notify(new(ToastType.Success, "Éxito", $"Cliente editado correctamente."));
+                navigation.NavigateTo("/Cliente/Index");
+            }
+            else
+            {
+                ToastService.Notify(new(ToastType.Danger, "Error", $"No se pudo editar el cliente. Revise la consola para detalles."));
+            }
+        }
+    }
+    public async Task Eliminar()
+    {
+        if (clientes != null && clientes.ClienteId > 0)
+        {
+            await clienteService.Eliminar(clientes.ClienteId);
+
+            ToastService?.Notify(new(ToastType.Success, "Eliminado", "Técnico eliminado correctamente."));
+            navigation.NavigateTo("/Cliente/Index");
+        }
+        else
+        {
+            ToastService?.Notify(new(ToastType.Warning, "Error", "No se pudo eliminar el técnico."));
+        }
+    }
+}

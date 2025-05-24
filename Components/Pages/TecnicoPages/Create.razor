@@ -3,12 +3,13 @@
 @inject NavigationManager navigation
 @rendermode InteractiveServer
 
+
 <PageTitle>Create</PageTitle>
     <EditForm Model="tecnico" OnValidSubmit="Crear">
         <DataAnnotationsValidator />
         <ValidationSummary />
         <div class="container p-0">
-        <div class="card shadow">
+        <div class="card shadow/lg">
             <div class="card-header text-center bg-primary text-white">
                 <h3 class="card-title"><strong>Registro de Técnicos</strong></h3>
             </div>
@@ -16,7 +17,7 @@
         <div class="card-body">
                 @*Id*@
                 <div class="mb-3">
-                    <label class="form-label"><strong>TecnicoId</strong></label>
+                    <label class="form-label"><strong>Tecnico Id</strong></label>
                     <InputNumber class="form-control" @bind-Value="tecnico.TecnicoId" READONLY></InputNumber>
                 </div>
 
@@ -37,10 +38,12 @@
                 </div>
 
         @* footer *@
-        <div class="card-footer text-center mt-3">
+        <div class="card-footer text-center mt-2">
             <button type="button" class="btn btn-outline-primary ml-2" @onclick="Nuevo"><span class="bi bi-plus"></span> Nuevo </button>
             <button type="submit" class="btn btn-outline-success ml-2"><span class="bi bi-check-circle-fill"></span> Guardar </button>
-            <a type="button" href="/Tecnico/Index/" class="btn btn-outline-danger"><span class="bi bi-arrow-bar-left"></span> Volver </a>
+                <a type="button" href="/Tecnico/Index/" class="btn btn-secondary">
+                    <i class="bi bi-arrow-bar-left"></i> Volver
+                </a>
         </div>
     </div>
     </div>
@@ -62,7 +65,7 @@
             ToastService?.Notify(new(ToastType.Success, "Éxito", "Técnico creado correctamente."));
 
             tecnico = new Tecnicos();
-            navigation.NavigateTo("/Tecnico/Index");
+            navigation.NavigateTo("/Tecnico/Index?mensaje=Tecnico creado correctamente");
         }
         else
         {
