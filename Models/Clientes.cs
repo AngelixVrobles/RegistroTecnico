@@ -1,5 +1,4 @@
-﻿using RegistroTecnico.Services;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RegistroTecnico.Models
@@ -7,31 +6,30 @@ namespace RegistroTecnico.Models
     public class Clientes
     {
         [Key]
-    public int ClienteId { get; set; }
+        public int ClienteId { get; set; }
 
-    public DateTime FechaIngreso { get; set; } = DateTime.Now;
+        [Required(ErrorMessage = "El nombre es obligatorio")]
+        [RegularExpression(@"^[a-zA-ZÁÉÍÓÚÜÑáéíóúüñ'’\s]+$", ErrorMessage = "El nombre solo puede contener letras y caracteres válidos")]
+        public string Nombres { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "El Nombres obligatorio")]
-    [RegularExpression(@"^[a-zA-Z\s]+$", ErrorMessage = "No se permiten Numero")]
-    public string? Nombres { get; set; }
+        [Required(ErrorMessage = "La fecha de ingreso es obligatoria")]
+        public DateTime FechaIngreso { get; set; } = DateTime.Now;
 
-    [Required(ErrorMessage = "La direccion es obligatoria")]
-    public string? Direccion { get; set; }
+        [Required(ErrorMessage = "La dirección es obligatoria")]
+        public string Direccion { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "El RNC es obligatorio.")]
-    [RegularExpression(@"^\d{10}$", ErrorMessage = "El RNC debe contener 10 dígitos.")]
-    public string? RNC { get; set; } 
+        [Required(ErrorMessage = "El RNC es obligatorio")]
+        [RegularExpression(@"^\d{3}-?\d{7}-?\d{1}$", ErrorMessage = "El RNC debe tener 10 dígitos, con o sin guiones")]
+        public string RNC { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "El límite de crédito es obligatorio.")]
-    [Range(0, 1000000, ErrorMessage = "El límite de crédito debe estar entre 0 y 1,000,000.")]
-    public decimal LimiteCredito { get; set; }
+        [Required(ErrorMessage = "El límite de crédito es obligatorio")]
+        [Range(0, 9999999999999.99, ErrorMessage = "El límite debe ser un valor positivo")]
+        public decimal LimiteCredito { get; set; }
 
-    [Required(ErrorMessage = "El Campo es obligatorio.")]
-    public int TecnicoId { get; set; }
+        [Required(ErrorMessage = "Debe seleccionar un técnico")]
+        public int TecnicoId { get; set; }
 
-    [ForeignKey("TecnicoId")]
-    public virtual Tecnicos Tecnicos { get; set; } = null!;
-
-
+        [ForeignKey("TecnicoId")]
+        public Tecnicos? Tecnico { get; set; }
     }
 }
