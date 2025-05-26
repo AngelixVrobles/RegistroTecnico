@@ -17,19 +17,12 @@
         </a>
 
         <div class="card-body">
+            <!-- Filtros -->
             <div class="row">
-                <div class="col-3">
-                    <label class="col-form-label ms-1"><strong>Filtrar por</strong></label>
-                </div>
-                <div class="col-4">
-                    <label class="col-form-label ms-1"><strong>Búsqueda</strong></label>
-                </div>
-                <div class="col-2">
-                    <label class="col-form-label ms-1"><strong>Desde</strong></label>
-                </div>
-                <div class="col-2">
-                    <label class="col-form-label ms-1"><strong>Hasta</strong></label>
-                </div>
+                <div class="col-3"><label class="col-form-label ms-1"><strong>Filtrar por</strong></label></div>
+                <div class="col-4"><label class="col-form-label ms-1"><strong>Búsqueda</strong></label></div>
+                <div class="col-2"><label class="col-form-label ms-1"><strong>Desde</strong></label></div>
+                <div class="col-2"><label class="col-form-label ms-1"><strong>Hasta</strong></label></div>
             </div>
 
             <div class="row align-items-center mt-1">
@@ -62,7 +55,8 @@
                 </div>
             </div>
 
-            @if (Cliente.Any())
+            <!-- Tabla -->
+            @if (ClientePaginado.Any())
             {
                 <table class="table table-hover table-bordered text-center mt-4">
                     <thead class="table-striped text-black">
@@ -70,15 +64,15 @@
                             <th>Id</th>
                             <th>Nombres</th>
                             <th>Fecha</th>
-                            <th>Direccion</th>
+                            <th>Dirección</th>
                             <th>RNC</th>
-                            <th>LimiteCredito</th>
-                            <th>Tecnico</th>
+                            <th>Límite Crédito</th>
+                            <th>Técnico</th>
                             <th>Editar</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var cliente in Cliente)
+                        @foreach (var cliente in ClientePaginado)
                         {
                             var tecnico = Tecnicos.FirstOrDefault(t => t.TecnicoId == cliente.TecnicoId);
                             <tr>
@@ -87,7 +81,7 @@
                                 <td>@cliente.FechaIngreso.ToShortDateString()</td>
                                 <td>@cliente.Direccion</td>
                                 <td>@cliente.RNC</td>
-                                <td>@cliente.LimiteCredito.ToString("N2", CultureInfo.InvariantCulture)</td>
+                                <td>@cliente.LimiteCredito.ToString("C2", CultureInfo.CurrentCulture)</td>
                                 <td>@(tecnico?.Nombres ?? "No encontrado")</td>
                                 <td>
                                     <a href="/Cliente/Edit/@cliente.ClienteId" class="btn btn-outline-success bi bi-pencil-fill"></a>
@@ -96,6 +90,13 @@
                         }
                     </tbody>
                 </table>
+
+                <!-- Paginación -->
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-outline-secondary" @onclick="AnteriorPagina" disabled="@(!PuedeRetroceder)">Anterior</button>
+                    <span>Página @PaginaActual de @TotalPaginas</span>
+                    <button class="btn btn-outline-secondary" @onclick="SiguientePagina" disabled="@(!PuedeAvanzar)">Siguiente</button>
+                </div>
             }
             else
             {
@@ -105,7 +106,7 @@
 
         <div class="card-footer space-between">
             <label><strong>Cantidad: @Cliente.Count()</strong></label>
-            <label><strong>Limite de Credito Total: @Cliente.Sum(c => c.LimiteCredito)</strong></label>
+            <label><strong>Límite de Crédito Total: @Cliente.Sum(c => c.LimiteCredito).ToString("C2", CultureInfo.CurrentCulture)</strong></label>
         </div>
     </div>
 </div>
@@ -113,6 +114,15 @@
 @code {
     public List<Clientes> Cliente = new();
     public List<Tecnicos> Tecnicos = new();
+
+    // Paginación
+    private int PaginaActual = 1;
+    private int TamañoPagina = 10;
+    private IEnumerable<Clientes> ClientePaginado => Cliente.Skip((PaginaActual - 1) * TamañoPagina).Take(TamañoPagina);
+    private int TotalPaginas => (int)Math.Ceiling((double)Cliente.Count / TamañoPagina);
+    private bool PuedeRetroceder => PaginaActual > 1;
+    private bool PuedeAvanzar => PaginaActual < TotalPaginas;
+
     private string filtro = "";
     private string valorFiltro = "";
     public DateTime? Desde { get; set; }
@@ -134,21 +144,18 @@
         }
         else if (filtro == "Nombres")
         {
-            resultados = await clienteService.Listar(c =>
-                !string.IsNullOrWhiteSpace(c.Nombres) &&
-                c.Nombres.ToLower().Contains(valorFiltro.ToLower()));
+            resultados = await clienteService.Listar(c => !string.IsNullOrWhiteSpace(c.Nombres) &&
+                                                          c.Nombres.ToLower().Contains(valorFiltro.ToLower()));
         }
         else if (filtro == "Direccion")
         {
-            resultados = await clienteService.Listar(c =>
-                !string.IsNullOrWhiteSpace(c.Direccion) &&
-                c.Direccion.ToLower().Contains(valorFiltro.ToLower()));
+            resultados = await clienteService.Listar(c => !string.IsNullOrWhiteSpace(c.Direccion) &&
+                                                          c.Direccion.ToLower().Contains(valorFiltro.ToLower()));
         }
         else if (filtro == "RNC")
         {
-            resultados = await clienteService.Listar(c =>
-                !string.IsNullOrWhiteSpace(c.RNC) &&
-                c.RNC.ToLower().Contains(valorFiltro.ToLower()));
+            resultados = await clienteService.Listar(c => !string.IsNullOrWhiteSpace(c.RNC) &&
+                                                          c.RNC.ToLower().Contains(valorFiltro.ToLower()));
         }
         else if (filtro == "LimiteCredito" && decimal.TryParse(valorFiltro, out decimal limite))
         {
@@ -156,12 +163,22 @@
         }
         else if (filtro == "Fecha" && Desde.HasValue && Hasta.HasValue)
         {
-            resultados = await clienteService.Listar(c =>
-                c.FechaIngreso.Date >= Desde.Value.Date &&
-                c.FechaIngreso.Date <= Hasta.Value.Date);
+            resultados = await clienteService.Listar(c => c.FechaIngreso.Date >= Desde.Value.Date &&
+                                                          c.FechaIngreso.Date <= Hasta.Value.Date);
         }
 
         Cliente = resultados.Any() ? resultados : await clienteService.Listar(c => true);
+        PaginaActual = 1; 
     }
 
+    private void SiguientePagina()
+    {
+        if (PuedeAvanzar) PaginaActual++;
+    }
+
+    private void AnteriorPagina()
+    {
+        if (PuedeRetroceder) PaginaActual--;
+    }
+}
 }
