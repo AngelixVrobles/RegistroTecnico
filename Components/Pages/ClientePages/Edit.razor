@@ -5,9 +5,11 @@
 @rendermode InteractiveServer
 
 <PageTitle>Editar Cliente</PageTitle>
+
 <EditForm Model="clientes" OnValidSubmit="Modificar">
     <DataAnnotationsValidator />
     <ValidationSummary />
+
     <div class="container">
         <div class="card shadow-lg">
             <div class="card-header text-center bg-success text-white">
@@ -17,59 +19,60 @@
             <div class="card-body">
                 <div class="mb-3">
                     <label class="form-label"><strong>ClienteId</strong></label>
-                    <InputNumber class="form-control" @bind-Value="clientes.ClienteId" READONLY></InputNumber>
+                    <InputNumber class="form-control" @bind-Value="clientes.ClienteId" readonly></InputNumber>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label" for="nombres"><strong>Nombre</strong></label>
                     <InputText id="nombres" class="form-control" @bind-Value="clientes.Nombres"></InputText>
-                    <ValidationMessage For="@(()=> clientes.Nombres)"></ValidationMessage>
+                    <ValidationMessage For="@(() => clientes.Nombres)" />
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label"><strong>Fecha</strong></label>
                     <InputDate class="form-control" @bind-Value="clientes.FechaIngreso"></InputDate>
-                    <ValidationMessage For="@(()=> clientes.FechaIngreso)"></ValidationMessage>
+                    <ValidationMessage For="@(() => clientes.FechaIngreso)" />
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label"><strong>Dirrecion</strong></label>
+                    <label class="form-label"><strong>Dirección</strong></label>
                     <InputText class="form-control" @bind-Value="clientes.Direccion"></InputText>
-                    <ValidationMessage For="@(()=> clientes.Direccion)"></ValidationMessage>
+                    <ValidationMessage For="@(() => clientes.Direccion)" />
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label"><strong>RNC</strong></label>
                     <InputText class="form-control" @bind-Value="clientes.RNC"></InputText>
-                    <ValidationMessage For="@(()=> clientes.RNC)"></ValidationMessage>
+                    <ValidationMessage For="@(() => clientes.RNC)" />
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label"><strong>Limite Credito</strong></label>
+                    <label class="form-label"><strong>Límite Crédito</strong></label>
                     <InputNumber class="form-control" @bind-Value="clientes.LimiteCredito"></InputNumber>
-                    <ValidationMessage For="@(()=> clientes.LimiteCredito)"></ValidationMessage>
+                    <ValidationMessage For="@(() => clientes.LimiteCredito)" />
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label"><strong>Tecnico</strong></label>
-                    <div class="input-group">
-                        <InputSelect class="form-control form-select" @bind-Value="clientes.TecnicoId">
-                            <option value="0" selected disabled>Elija una opción</option>
-                            @foreach (var Tecnico in tecnicos)
-                            {
-                                <option value="@Tecnico.TecnicoId">@Tecnico.Nombres</option>
-                            }
-                        </InputSelect>
-                        <ValidationMessage For="@(()=> clientes.TecnicoId)"></ValidationMessage>
-                    </div>
+                    <label class="form-label"><strong>Técnico</strong></label>
+                    <InputSelect class="form-control form-select" @bind-Value="clientes.TecnicoId">
+                        <option value="0" disabled>Elija una opción</option>
+                        @foreach (var tecnico in tecnicos)
+                        {
+                            <option value="@tecnico.TecnicoId">@tecnico.Nombres</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => clientes.TecnicoId)" />
                 </div>
             </div>
+
             <div class="card-footer text-center mt-3">
-                <button type="submit" class="btn btn-outline-success ml-2"><span class="bi bi-check-circle-fill"></span> Guardar </button>
+                <button type="submit" class="btn btn-outline-success ml-2">
+                    <span class="bi bi-check-circle-fill"></span> Guardar
+                </button>
                 <button type="button" class="btn btn-outline-danger ml-2" @onclick="Eliminar">
                     <span class="bi bi-trash-fill"></span> Eliminar
                 </button>
-                <a type="button" href="/Cliente/Index/" class="btn btn-secondary">
+                <a href="/Cliente/Index/" class="btn btn-secondary">
                     <i class="bi bi-arrow-bar-left"></i> Volver
                 </a>
             </div>
@@ -80,98 +83,111 @@
 @code {
     [Parameter]
     public int ClienteId { get; set; }
-    public Clientes clientes { get; set; } = new Clientes();
-    public List<Tecnicos> tecnicos { get; set; } = new List<Tecnicos>();
+
+    public Clientes clientes { get; set; } = new();
+    public List<Tecnicos> tecnicos { get; set; } = new();
     [Inject] protected ToastService ToastService { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        if (ClienteId > 0)
+        if (ClienteId <= 0)
         {
-            clientes = await clienteService.Buscar(ClienteId);
-            if (clientes == null)
-            {
-                navigation.NavigateTo("/Cliente/Index");
-                ToastService.Notify(new(ToastType.Warning, "Advertencia", "Cliente no encontrado."));
-                return;
-            }
-            tecnicos = await tecnicoService.Listar(t => true);
-        }
-        else
-        {
-            navigation.NavigateTo("/Cliente/Index");
             ToastService.Notify(new(ToastType.Danger, "Error", "ID de cliente inválido."));
+            navigation.NavigateTo("/Cliente/Index");
+            return;
         }
+
+        clientes = await clienteService.Buscar(ClienteId);
+        if (clientes == null)
+        {
+            ToastService.Notify(new(ToastType.Warning, "Advertencia", "Cliente no encontrado."));
+            navigation.NavigateTo("/Cliente/Index");
+            return;
+        }
+
+        tecnicos = await tecnicoService.Listar(t => true);
     }
 
     public async Task Modificar()
     {
-        bool nombreYaExiste = false;
-        bool rncYaExiste = false;
-
-        var clienteOriginal = await clienteService.Buscar(ClienteId);
-
-        if (clienteOriginal != null)
+        try
         {
+            bool nombreDuplicado = false;
+            bool rncDuplicado = false;
+
+            var clienteOriginal = await clienteService.Buscar(ClienteId);
+
+            if (clienteOriginal == null)
+            {
+                ToastService.Notify(new(ToastType.Danger, "Error", "Cliente no encontrado para editar."));
+                return;
+            }
+
             if (clientes.Nombres != clienteOriginal.Nombres)
             {
-                var clienteConMismoNombre = await clienteService.BuscarNombres(clientes.Nombres);
-                nombreYaExiste = (clienteConMismoNombre != null && clienteConMismoNombre.ClienteId != clientes.ClienteId);
+                var existe = await clienteService.BuscarNombres(clientes.Nombres);
+                nombreDuplicado = existe != null && existe.ClienteId != clientes.ClienteId;
             }
 
             if (clientes.RNC != clienteOriginal.RNC)
             {
-                var clienteConMismoRnc = await clienteService.BuscarRNC(clientes.RNC);
-                rncYaExiste = (clienteConMismoRnc != null && clienteConMismoRnc.ClienteId != clientes.ClienteId);
+                var existe = await clienteService.BuscarRNC(clientes.RNC);
+                rncDuplicado = existe != null && existe.ClienteId != clientes.ClienteId;
             }
-        }
-        else
-        {
-            nombreYaExiste = await clienteService.BuscarNombres(clientes.Nombres) != null;
-            rncYaExiste = await clienteService.BuscarRNC(clientes.RNC) != null;
-        }
 
-        if (nombreYaExiste || rncYaExiste)
-        {
-            if (nombreYaExiste && rncYaExiste)
+            if (nombreDuplicado || rncDuplicado)
             {
-                ToastService.Notify(new(ToastType.Danger, "Error", $"Ya existe un cliente con ese nombre y RNC."));
+                string errorMsg = "⚠️ Error: ";
+                if (nombreDuplicado && rncDuplicado)
+                    errorMsg += "ya existe un cliente con ese nombre y RNC.";
+                else if (nombreDuplicado)
+                    errorMsg += "ya existe un cliente con ese nombre.";
+                else
+                    errorMsg += "ya existe un cliente con ese RNC.";
+
+                ToastService.Notify(new(ToastType.Danger, "Duplicado", errorMsg));
+                return;
             }
-            else if (nombreYaExiste)
+
+            var guardado = await clienteService.Guardar(clientes);
+
+            if (guardado)
             {
-                ToastService.Notify(new(ToastType.Danger, "Error", $"Ya existe un cliente con ese nombre."));
-            }
-            else if (rncYaExiste)
-            {
-                ToastService.Notify(new(ToastType.Danger, "Error", $"Ya existe un cliente con ese RNC."));
-            }
-        }
-        else
-        {
-            var guardadoExitoso = await clienteService.Guardar(clientes);
-            if (guardadoExitoso)
-            {
-                ToastService.Notify(new(ToastType.Success, "Éxito", $"Cliente editado correctamente."));
+                ToastService.Notify(new(ToastType.Success, "Éxito", "Cliente editado correctamente."));
                 navigation.NavigateTo("/Cliente/Index");
             }
             else
             {
-                ToastService.Notify(new(ToastType.Danger, "Error", $"No se pudo editar el cliente. Revise la consola para detalles."));
+                ToastService.Notify(new(ToastType.Danger, "Error", "No se pudo guardar el cliente. Verifica los datos e intenta de nuevo."));
             }
         }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error al modificar cliente: {ex.Message}");
+            ToastService.Notify(new(ToastType.Danger, "Error inesperado", "Ocurrió un error al modificar el cliente. Revisa la consola para más detalles."));
+        }
     }
+
     public async Task Eliminar()
     {
-        if (clientes != null && clientes.ClienteId > 0)
+        try
         {
-            await clienteService.Eliminar(clientes.ClienteId);
-
-            ToastService?.Notify(new(ToastType.Success, "Eliminado", "Técnico eliminado correctamente."));
-            navigation.NavigateTo("/Cliente/Index");
+            if (clientes?.ClienteId > 0)
+            {
+                await clienteService.Eliminar(clientes.ClienteId);
+                ToastService.Notify(new(ToastType.Success, "Eliminado", "Cliente eliminado correctamente."));
+                navigation.NavigateTo("/Cliente/Index");
+            }
+            else
+            {
+                ToastService.Notify(new(ToastType.Warning, "Error", "No se pudo eliminar el cliente. Verifica el ID."));
+            }
         }
-        else
+        catch (Exception ex)
         {
-            ToastService?.Notify(new(ToastType.Warning, "Error", "No se pudo eliminar el técnico."));
+            Console.Error.WriteLine($"Error al eliminar cliente: {ex.Message}");
+            ToastService.Notify(new(ToastType.Danger, "Error inesperado", "Ocurrió un error al eliminar el cliente. Revisa la consola para más detalles."));
         }
     }
 }
+    
