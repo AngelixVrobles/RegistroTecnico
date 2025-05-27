@@ -55,7 +55,7 @@
                 <div class="mb-3">
                     <label class="form-label"><strong>Técnico</strong></label>
                     <InputSelect class="form-control form-select" @bind-Value="clientes.TecnicoId">
-                        <option value="" selected disabled>Elija una opción</option>
+                        <option value="" >Elija una opción</option>
                         @foreach (var Tecnico in tecnico)
                         {
                             <option value="@Tecnico.TecnicoId">@Tecnico.Nombres</option>
