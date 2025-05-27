@@ -1,0 +1,139 @@
+﻿@page "/Cliente/Create"
+@inject TecnicoService tecnicoService
+@inject NavigationManager navigation
+@inject ClienteService clienteService
+@rendermode InteractiveServer
+
+<PageTitle>Crear Cliente</PageTitle>
+
+<EditForm Model="clientes" OnValidSubmit="Crear" OnInvalidSubmit="HandleInvalidSubmit">
+    <DataAnnotationsValidator />
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header text-center bg-primary text-white">
+                <h3 class="card-title"><strong>Crear Cliente</strong></h3>
+            </div>
+
+            <div class="card-body">
+                <ValidationSummary class="alert alert-danger mb-3" />
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>ClienteId</strong></label>
+                    <InputNumber class="form-control" @bind-Value="clientes.ClienteId" readonly></InputNumber>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="nombres"><strong>Nombre</strong></label>
+                    <InputText id="nombres" class="form-control" @bind-Value="clientes.Nombres"></InputText>
+                    <ValidationMessage For="@(() => clientes.Nombres)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Fecha</strong></label>
+                    <InputDate class="form-control" @bind-Value="clientes.FechaIngreso"></InputDate>
+                    <ValidationMessage For="@(() => clientes.FechaIngreso)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Dirección</strong></label>
+                    <InputText class="form-control" @bind-Value="clientes.Direccion"></InputText>
+                    <ValidationMessage For="@(() => clientes.Direccion)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>RNC</strong></label>
+                    <InputText class="form-control" @bind-Value="clientes.RNC"></InputText>
+                    <ValidationMessage For="@(() => clientes.RNC)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Límite Crédito</strong></label>
+                    <InputNumber class="form-control" @bind-Value="clientes.LimiteCredito"></InputNumber>
+                    <ValidationMessage For="@(() => clientes.LimiteCredito)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Técnico</strong></label>
+                    <InputSelect class="form-control form-select" @bind-Value="clientes.TecnicoId">
+                        <option value="" >Elija una opción</option>
+                        @foreach (var Tecnico in tecnico)
+                        {
+                            <option value="@Tecnico.TecnicoId">@Tecnico.Nombres</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => clientes.TecnicoId)" />
+                </div>
+            </div>
+
+            <div class="card-footer text-center mt-3">
+                <button type="button" class="btn btn-outline-primary" @onclick="Nuevo">
+                    <span class="bi bi-plus"></span> Nuevo
+                </button>
+                <button type="submit" class="btn btn-outline-success">
+                    <span class="bi bi-check-circle-fill"></span> Guardar
+                </button>
+                <a href="/Cliente/Index/" class="btn btn-secondary">
+                    <i class="bi bi-arrow-bar-left"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    public Clientes clientes { get; set; } = new Clientes();
+    public List<Tecnicos> tecnico { get; set; } = new List<Tecnicos>();
+    [Inject] protected ToastService ToastService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        tecnico = await tecnicoService.Listar(t => true);
+    }
+
+    public async Task Crear()
+    {
+        var conflicto = await ValidarDuplicados();
+
+        if (!string.IsNullOrEmpty(conflicto))
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error", conflicto));
+            return;
+        }
+
+        var exito = await clienteService.Guardar(clientes);
+
+        if (exito)
+        {
+            ToastService.Notify(new(ToastType.Success, "Éxito", $"Cliente creado correctamente."));
+            clientes = new Clientes();
+            navigation.NavigateTo("/Cliente/Index");
+        }
+        else
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error", $"No se pudo guardar el cliente."));
+        }
+    }
+
+    public void Nuevo()
+    {
+        clientes = new Clientes();
+    }
+
+    public async Task<string> ValidarDuplicados()
+    {
+        var existeNombre = await clienteService.BuscarNombres(clientes.Nombres);
+        var existeRnc = await clienteService.BuscarRNC(clientes.RNC);
+
+        if (existeNombre != null)
+            return "Ya existe un cliente con el mismo nombre.";
+        if (existeRnc != null)
+            return "Ya existe un cliente con el mismo RNC.";
+        return "";
+    }
+
+    public void HandleInvalidSubmit()
+    {
+        Console.WriteLine("Formulario inválido. Revise los campos con errores.");
+        ToastService.Notify(new(ToastType.Warning, "Advertencia", "Por favor, corrija los errores del formulario."));
+    }
+}

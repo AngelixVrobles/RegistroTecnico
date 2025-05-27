@@ -1,0 +1,193 @@
+﻿@page "/Cliente/Edit/{ClienteId:int}"
+@inject TecnicoService tecnicoService
+@inject ClienteService clienteService
+@inject NavigationManager navigation
+@rendermode InteractiveServer
+
+<PageTitle>Editar Cliente</PageTitle>
+
+<EditForm Model="clientes" OnValidSubmit="Modificar">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header text-center bg-success text-white">
+                <h3 class="card-title"><strong>Editar Cliente</strong></h3>
+            </div>
+
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label"><strong>ClienteId</strong></label>
+                    <InputNumber class="form-control" @bind-Value="clientes.ClienteId" readonly></InputNumber>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="nombres"><strong>Nombre</strong></label>
+                    <InputText id="nombres" class="form-control" @bind-Value="clientes.Nombres"></InputText>
+                    <ValidationMessage For="@(() => clientes.Nombres)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Fecha</strong></label>
+                    <InputDate class="form-control" @bind-Value="clientes.FechaIngreso"></InputDate>
+                    <ValidationMessage For="@(() => clientes.FechaIngreso)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Dirección</strong></label>
+                    <InputText class="form-control" @bind-Value="clientes.Direccion"></InputText>
+                    <ValidationMessage For="@(() => clientes.Direccion)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>RNC</strong></label>
+                    <InputText class="form-control" @bind-Value="clientes.RNC"></InputText>
+                    <ValidationMessage For="@(() => clientes.RNC)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Límite Crédito</strong></label>
+                    <InputNumber class="form-control" @bind-Value="clientes.LimiteCredito"></InputNumber>
+                    <ValidationMessage For="@(() => clientes.LimiteCredito)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Técnico</strong></label>
+                    <InputSelect class="form-control form-select" @bind-Value="clientes.TecnicoId">
+                        <option value="0" disabled>Elija una opción</option>
+                        @foreach (var tecnico in tecnicos)
+                        {
+                            <option value="@tecnico.TecnicoId">@tecnico.Nombres</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => clientes.TecnicoId)" />
+                </div>
+            </div>
+
+            <div class="card-footer text-center mt-3">
+                <button type="submit" class="btn btn-outline-success ml-2">
+                    <span class="bi bi-check-circle-fill"></span> Guardar
+                </button>
+                <button type="button" class="btn btn-outline-danger ml-2" @onclick="Eliminar">
+                    <span class="bi bi-trash-fill"></span> Eliminar
+                </button>
+                <a href="/Cliente/Index/" class="btn btn-secondary">
+                    <i class="bi bi-arrow-bar-left"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int ClienteId { get; set; }
+
+    public Clientes clientes { get; set; } = new();
+    public List<Tecnicos> tecnicos { get; set; } = new();
+    [Inject] protected ToastService ToastService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ClienteId <= 0)
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error", "ID de cliente inválido."));
+            navigation.NavigateTo("/Cliente/Index");
+            return;
+        }
+
+        clientes = await clienteService.Buscar(ClienteId);
+        if (clientes == null)
+        {
+            ToastService.Notify(new(ToastType.Warning, "Advertencia", "Cliente no encontrado."));
+            navigation.NavigateTo("/Cliente/Index");
+            return;
+        }
+
+        tecnicos = await tecnicoService.Listar(t => true);
+    }
+
+    public async Task Modificar()
+    {
+        try
+        {
+            bool nombreDuplicado = false;
+            bool rncDuplicado = false;
+
+            var clienteOriginal = await clienteService.Buscar(ClienteId);
+
+            if (clienteOriginal == null)
+            {
+                ToastService.Notify(new(ToastType.Danger, "Error", "Cliente no encontrado para editar."));
+                return;
+            }
+
+            if (clientes.Nombres != clienteOriginal.Nombres)
+            {
+                var existe = await clienteService.BuscarNombres(clientes.Nombres);
+                nombreDuplicado = existe != null && existe.ClienteId != clientes.ClienteId;
+            }
+
+            if (clientes.RNC != clienteOriginal.RNC)
+            {
+                var existe = await clienteService.BuscarRNC(clientes.RNC);
+                rncDuplicado = existe != null && existe.ClienteId != clientes.ClienteId;
+            }
+
+            if (nombreDuplicado || rncDuplicado)
+            {
+                string errorMsg = "⚠️ Error: ";
+                if (nombreDuplicado && rncDuplicado)
+                    errorMsg += "ya existe un cliente con ese nombre y RNC.";
+                else if (nombreDuplicado)
+                    errorMsg += "ya existe un cliente con ese nombre.";
+                else
+                    errorMsg += "ya existe un cliente con ese RNC.";
+
+                ToastService.Notify(new(ToastType.Danger, "Duplicado", errorMsg));
+                return;
+            }
+
+            var guardado = await clienteService.Guardar(clientes);
+
+            if (guardado)
+            {
+                ToastService.Notify(new(ToastType.Success, "Éxito", "Cliente editado correctamente."));
+                navigation.NavigateTo("/Cliente/Index");
+            }
+            else
+            {
+                ToastService.Notify(new(ToastType.Danger, "Error", "No se pudo guardar el cliente. Verifica los datos e intenta de nuevo."));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error al modificar cliente: {ex.Message}");
+            ToastService.Notify(new(ToastType.Danger, "Error inesperado", "Ocurrió un error al modificar el cliente. Revisa la consola para más detalles."));
+        }
+    }
+
+    public async Task Eliminar()
+    {
+        try
+        {
+            if (clientes?.ClienteId > 0)
+            {
+                await clienteService.Eliminar(clientes.ClienteId);
+                ToastService.Notify(new(ToastType.Success, "Eliminado", "Cliente eliminado correctamente."));
+                navigation.NavigateTo("/Cliente/Index");
+            }
+            else
+            {
+                ToastService.Notify(new(ToastType.Warning, "Error", "No se pudo eliminar el cliente. Verifica el ID."));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error al eliminar cliente: {ex.Message}");
+            ToastService.Notify(new(ToastType.Danger, "Error inesperado", "Ocurrió un error al eliminar el cliente. Revisa la consola para más detalles."));
+        }
+    }
+}
+    

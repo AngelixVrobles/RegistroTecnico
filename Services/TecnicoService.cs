@@ -2,6 +2,7 @@
 using RegistroTecnico.Models;
 using RegistroTecnico.DAL;
 using System.Linq.Expressions;
+using RegistroTecnico.Services;
 
 namespace RegistroTecnico.Services
 {
@@ -32,6 +33,7 @@ namespace RegistroTecnico.Services
 
         public async Task<bool> Guardar(Tecnicos tecnico)
         {
+
             if (!await Existe(tecnico.TecnicoId))
                 return await Insertar(tecnico);
             else
@@ -60,7 +62,7 @@ namespace RegistroTecnico.Services
         {
             using var contexto = await DbFactory.CreateDbContextAsync();
             return await contexto.Tecnicos
-                .FirstOrDefaultAsync(t => t.Nombre.Trim().ToLower() == nombre.Trim().ToLower());
+                .FirstOrDefaultAsync(t => t.Nombres.Trim().ToLower() == nombre.Trim().ToLower());
         }
 
         public async Task<List<Tecnicos>> Listar(Expression<Func<Tecnicos, bool>> filtro)
