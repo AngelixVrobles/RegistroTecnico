@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject TecnicoService tecnicoService
 @inject NavigationManager navigation
+@using System.Globalization;
 
 <PageTitle>Técnicos</PageTitle>
 
@@ -32,7 +33,7 @@
             <div class="row align-items-center">
                 <div class="col-3">
                     <InputSelect class="form-select" @bind-Value="filtro">
-                        <option value="" selected disabled>Elija una opción</option>
+                        <option value="">Elija una opción</option>
                         <option value="Id">Tecnico Id</option>
                         <option value="Nombres">Nombres</option>
                         <option value="SueldoHora">SueldoHora</option>
@@ -65,7 +66,7 @@
                     <tr>
                         <td>@tecnico.TecnicoId</td>
                         <td>@tecnico.Nombres</td>
-                        <td>@tecnico.SueldoHora.ToString("N2")</td>
+                        <td>@tecnico.SueldoHora.ToString("C2", CultureInfo.CurrentCulture)</td>
                         <td class="text-center">
                                 <a href="/Tecnico/Edit/@tecnico.TecnicoId" class="btn btn-outline-success bi bi-pencil-fill"></a>
                         </td>
@@ -74,9 +75,9 @@
             </tbody>
         </table>
         </div>
-        <div class="card-footer space-between">
+        <div class="card-footer d-flex justify-content-between">
             <label><strong>Cantidad: @tecnicos.Count()</strong></label>
-            <label><strong>Total de Sueldos x Horas: @tecnicos.Sum(c => c.SueldoHora)</strong></label>
+            <label class="ms-auto"><strong>Total de Sueldos x Horas: @tecnicos.Sum(c => c.SueldoHora).ToString("C2", CultureInfo.CurrentCulture)</strong></label>
         </div>
     </div>
 </div>
