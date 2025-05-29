@@ -6,19 +6,33 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace RegistroTecnico.Migrations
 {
     /// <inheritdoc />
-    public partial class cliente : Migration
+    public partial class Inicial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "Tecnicos",
+                columns: table => new
+                {
+                    TecnicoId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nombres = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SueldoHora = table.Column<float>(type: "real", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tecnicos", x => x.TecnicoId);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Clientes",
                 columns: table => new
                 {
                     ClienteId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    FechaIngreso = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Nombres = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FechaIngreso = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Direccion = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RNC = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LimiteCredito = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
@@ -46,6 +60,9 @@ namespace RegistroTecnico.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Clientes");
+
+            migrationBuilder.DropTable(
+                name: "Tecnicos");
         }
     }
 }

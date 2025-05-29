@@ -80,13 +80,13 @@ namespace RegistroTecnico.Migrations
 
             modelBuilder.Entity("RegistroTecnico.Models.Clientes", b =>
                 {
-                    b.HasOne("RegistroTecnico.Models.Tecnicos", "Tecnicos")
+                    b.HasOne("RegistroTecnico.Models.Tecnicos", "Tecnico")
                         .WithMany()
                         .HasForeignKey("TecnicoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Tecnicos");
+                    b.Navigation("Tecnico");
                 });
 #pragma warning restore 612, 618
         }

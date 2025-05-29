@@ -12,8 +12,8 @@ using RegistroTecnico.DAL;
 namespace RegistroTecnico.Migrations
 {
     [DbContext(typeof(Contexto))]
-    [Migration("20250520045815_cliente")]
-    partial class cliente
+    [Migration("20250529210628_Inicial")]
+    partial class Inicial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -83,13 +83,13 @@ namespace RegistroTecnico.Migrations
 
             modelBuilder.Entity("RegistroTecnico.Models.Clientes", b =>
                 {
-                    b.HasOne("RegistroTecnico.Models.Tecnicos", "Tecnicos")
+                    b.HasOne("RegistroTecnico.Models.Tecnicos", "Tecnico")
                         .WithMany()
                         .HasForeignKey("TecnicoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Tecnicos");
+                    b.Navigation("Tecnico");
                 });
 #pragma warning restore 612, 618
         }
