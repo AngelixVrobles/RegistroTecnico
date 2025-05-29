@@ -15,9 +15,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-var ConStr = builder.Configuration.GetConnectionString("ConStr");
-
-builder.Services.AddDbContextFactory<Contexto>(o => o.UseSqlServer(ConStr));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContextFactory<Contexto>(options =>options.UseSqlServer(connectionString));
 
 builder.Services.AddBlazorBootstrap();
 
