@@ -107,7 +107,7 @@
             }
         </div>
 
-        <div class="card-footer space-between">
+        <div class="card-footer d-flex justify-content-between">
             <label><strong>Cantidad: @FilteredClients.Count()</strong></label>
             <label><strong>Límite de Crédito Total: @FilteredClients.Sum(c => c.LimiteCredito).ToString("C2", CultureInfo.CurrentCulture)</strong></label>
         </div>
@@ -123,7 +123,7 @@
     private int TamañoPagina = 10;
 
     private IEnumerable<Clientes> ClientePaginado => FilteredClients
-        .OrderByAscending(c => c.ClienteId == 1) 
+        .OrderByDescending(c => c.ClienteId == 1) 
         .ThenBy(c => c.ClienteId) 
         .Skip((PaginaActual - 1) * TamañoPagina)
         .Take(TamañoPagina);
