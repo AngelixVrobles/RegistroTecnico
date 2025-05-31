@@ -5,6 +5,9 @@ using System.Linq.Expressions;
 
 namespace RegistroTecnico.Services;
 
+
+
+
 public class ClienteService(IDbContextFactory<Contexto> DbFactory)
 {
     public async Task<bool> Existe(int id)
@@ -39,12 +42,16 @@ public class ClienteService(IDbContextFactory<Contexto> DbFactory)
         return await contexto.SaveChangesAsync() > 0;
     }
 
-    public async Task<bool> Eliminar(int id)
+    public async Task<bool> Eliminar(int clienteId)
     {
         await using var contexto = await DbFactory.CreateDbContextAsync();
-        var eliminados = await contexto.Clientes
-            .Where(c => c.ClienteId == id).ExecuteDeleteAsync();
-        return eliminados > 0;
+
+        var cliente = await contexto.Clientes.FindAsync(clienteId);
+        if (cliente == null)
+            return false;
+
+        contexto.Clientes.Remove(cliente);
+        return await contexto.SaveChangesAsync() > 0;
     }
 
     public async Task<Clientes?> Buscar(int id)
@@ -79,5 +86,4 @@ public class ClienteService(IDbContextFactory<Contexto> DbFactory)
             .Where(criterio)
             .ToListAsync();
     }
-   
 }

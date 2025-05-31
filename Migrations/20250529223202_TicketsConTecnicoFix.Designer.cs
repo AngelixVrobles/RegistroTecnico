@@ -12,8 +12,8 @@ using RegistroTecnico.DAL;
 namespace RegistroTecnico.Migrations
 {
     [DbContext(typeof(Contexto))]
-    [Migration("20250529210628_Inicial")]
-    partial class Inicial
+    [Migration("20250529223202_TicketsConTecnicoFix")]
+    partial class TicketsConTecnicoFix
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -81,6 +81,47 @@ namespace RegistroTecnico.Migrations
                     b.ToTable("Tecnicos");
                 });
 
+            modelBuilder.Entity("Tickets", b =>
+                {
+                    b.Property<int>("TicketId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TicketId"));
+
+                    b.Property<string>("Asunto")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Prioridad")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TecnicoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TiempoInvertido")
+                        .HasColumnType("int");
+
+                    b.HasKey("TicketId");
+
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("TecnicoId");
+
+                    b.ToTable("Tickets");
+                });
+
             modelBuilder.Entity("RegistroTecnico.Models.Clientes", b =>
                 {
                     b.HasOne("RegistroTecnico.Models.Tecnicos", "Tecnico")
@@ -90,6 +131,25 @@ namespace RegistroTecnico.Migrations
                         .IsRequired();
 
                     b.Navigation("Tecnico");
+                });
+
+            modelBuilder.Entity("Tickets", b =>
+                {
+                    b.HasOne("RegistroTecnico.Models.Clientes", "Clientes")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegistroTecnico.Models.Tecnicos", "Tecnicos")
+                        .WithMany()
+                        .HasForeignKey("TecnicoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Clientes");
+
+                    b.Navigation("Tecnicos");
                 });
 #pragma warning restore 612, 618
         }

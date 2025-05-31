@@ -15,7 +15,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("ConStr");
 builder.Services.AddDbContextFactory<Contexto>(options =>options.UseSqlServer(connectionString));
 
 builder.Services.AddBlazorBootstrap();
@@ -23,9 +23,8 @@ builder.Services.AddBlazorBootstrap();
 //Inyeccion del services
 builder.Services.AddScoped<TecnicoService>();
 builder.Services.AddScoped<ClienteService>();
+builder.Services.AddScoped<TicketService>();
 builder.Services.AddBlazoredToast();
-
-
 
 var app = builder.Build();
 

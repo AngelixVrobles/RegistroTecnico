@@ -1,0 +1,174 @@
+﻿@page "/Ticket/Create"
+@inject ClienteService clienteService
+@inject TecnicoService tecnicoService
+@inject TicketService ticketService
+@inject NavigationManager navigation
+@using System.Globalization
+@using System.Linq.Expressions
+@rendermode InteractiveServer
+
+
+<EditForm Model="Tickets" OnValidSubmit="Crear">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header text-center">
+                <h5 class="card-title">Crear Tickets</h5>
+            </div>
+
+            <div class="card-body">
+
+                @*Id*@
+                <div class="mb-3">
+                    <label class="form-label"><strong>TicketId</strong></label>
+                    <InputNumber class="form-control" @bind-Value="Tickets.TicketId" READONLY></InputNumber>
+                </div>
+
+                @*Fecha*@
+                <div class="mb-3">
+                    <label class="form-label"><strong>Fecha</strong></label>
+                    <InputDate class="form-control" @bind-Value="Tickets.Fecha"></InputDate>
+                    <ValidationMessage For="@(()=> Tickets.TicketId)"></ValidationMessage>
+                </div>
+
+                @*Prioridad*@
+                <div class="mb-3">
+                    <label class="form-label"><strong>Prioridad</strong></label>
+                    <InputSelect class="form-select" @bind-Value="Tickets.Prioridad">
+                        <option value="" disabled selected>Seleccione una prioridad</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Media">Media</option>
+                        <option value="Baja">Baja</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => Tickets.Prioridad)"></ValidationMessage>
+                </div>
+
+                @*Asuntos*@
+                <div class="mb-3">
+                    <label class="form-label"><strong>Asunto</strong></label>
+                    <InputText class="form-control" @bind-Value="Tickets.Asunto"></InputText>
+                    <ValidationMessage For="@(()=> Tickets.Asunto)"></ValidationMessage>
+                </div>
+
+                @*Depcripcion*@
+                <div class="mb-3">
+                    <label class="form-label"><strong>Descripcion</strong></label>
+                    <InputText class="form-control" @bind-Value="Tickets.Descripcion"></InputText>
+                    <ValidationMessage For="@(()=> Tickets.Descripcion)"></ValidationMessage>
+                </div>
+
+                @*Tiempo invertido (Días, Horas, Minutos)*@
+                <div class="mb-3">
+                    <label class="form-label"><strong>Tiempo Invertido</strong></label>
+                    <div class="input-group">
+                        <InputNumber class="form-control" @bind-Value="Dias" placeholder="Días" min="0" />
+                        <span class="input-group-text">días</span>
+
+                        <InputNumber class="form-control" @bind-Value="Horas" placeholder="Horas" min="0" max="23" />
+                        <span class="input-group-text">horas</span>
+
+                        <InputNumber class="form-control" @bind-Value="Minutos" placeholder="Minutos" min="0" max="59" />
+                        <span class="input-group-text">min</span>
+                    </div>
+                </div>
+
+                @*Cliente*@
+                <div class="mb-3">
+                    <label class="form-label"><strong>Cliente</strong></label>
+
+                    <div class="input-group">
+
+                        <InputSelect class="form-control form-select" @bind-Value="Tickets.ClienteId">
+                            <option value="0" selected disabled>Elija una opción</option>
+                            @foreach (var Cliente in clientes)
+                            {
+                                <option value="@Cliente.ClienteId">@Cliente.Nombres</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(()=> Tickets.ClienteId)"></ValidationMessage>
+                    </div>
+                </div>
+
+                @*Tecnico*@
+                <div class="mb-3">
+                    <label class="form-label"><strong>Tecnico</strong></label>
+
+                    <div class="input-group">
+
+                        <InputSelect class="form-control form-select" @bind-Value="Tickets.TecnicoId">
+                            <option value="0" selected disabled>Elija una opción</option>
+                            @foreach (var Tecnico in tecnicos)
+                            {
+                                <option value="@Tecnico.TecnicoId">@Tecnico.Nombres</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(()=> Tickets.TecnicoId)"></ValidationMessage>
+                    </div>
+                </div>
+            </div>
+            @*footer*@
+
+            <div class="card-footer text-center mt-3">
+                <button type="button" class="btn btn-outline-primary" @onclick="Nuevo">
+                    <span class="bi bi-plus"></span> Nuevo
+                </button>
+                <button type="submit" class="btn btn-outline-success">
+                    <span class="bi bi-check-circle-fill"></span> Guardar
+                </button>
+                <a href="/Ticket/Index/" class="btn btn-secondary">
+                    <i class="bi bi-arrow-bar-left"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    public Tickets Tickets { get; set; } = new Tickets();
+    public List<Tecnicos> tecnicos { get; set; } = new List<Tecnicos>();
+    public List<Clientes> clientes { get; set; } = new List<Clientes>();
+    [Inject] protected ToastService ToastService { get; set; }
+    private int Dias { get; set; }
+    private int Horas { get; set; }
+    private int Minutos { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        tecnicos = await tecnicoService.Listar(t => true);
+        clientes = await clienteService.Listar(t => true);
+    }
+
+    public Create(ToastService toastService)
+    {
+        ToastService = toastService;
+    }
+
+
+    public async Task Crear()
+    {
+        Tickets.TiempoInvertido = (Dias * 1440) + (Horas * 60) + Minutos;
+
+        if (Tickets.TicketId == 0)
+        {
+            await ticketService.Guardar(Tickets);
+            ToastService.Notify(new(ToastType.Success, "Éxito", $"Ticket creado correctamente."));
+            Tickets = new Tickets();
+            Dias = Horas = Minutos = 0;
+            navigation.NavigateTo("/Ticket/Index");
+        }
+        else
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error", $"Error al crear Ticket."));
+        }
+    }
+
+
+    public void Nuevo()
+    {
+        Tickets = new Tickets();
+    }
+
+
+}
