@@ -55,7 +55,7 @@ namespace RegistroTecnico.Migrations
 
                     b.HasIndex("TecnicoId");
 
-                    b.ToTable("Clientes");
+                    b.ToTable("Clientes", (string)null);
                 });
 
             modelBuilder.Entity("RegistroTecnico.Models.Tecnicos", b =>
@@ -75,16 +75,76 @@ namespace RegistroTecnico.Migrations
 
                     b.HasKey("TecnicoId");
 
-                    b.ToTable("Tecnicos");
+                    b.ToTable("Tecnicos", (string)null);
+                });
+
+            modelBuilder.Entity("Tickets", b =>
+                {
+                    b.Property<int>("TicketId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TicketId"));
+
+                    b.Property<string>("Asunto")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ClienteId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Prioridad")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TecnicoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TiempoInvertido")
+                        .HasColumnType("int");
+
+                    b.HasKey("TicketId");
+
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("TecnicoId");
+
+                    b.ToTable("Tickets", (string)null);
                 });
 
             modelBuilder.Entity("RegistroTecnico.Models.Clientes", b =>
                 {
-                    b.HasOne("RegistroTecnico.Models.Tecnicos", "Tecnicos")
+                    b.HasOne("RegistroTecnico.Models.Tecnicos", "Tecnico")
                         .WithMany()
                         .HasForeignKey("TecnicoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Tecnico");
+                });
+
+            modelBuilder.Entity("Tickets", b =>
+                {
+                    b.HasOne("RegistroTecnico.Models.Clientes", "Clientes")
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RegistroTecnico.Models.Tecnicos", "Tecnicos")
+                        .WithMany()
+                        .HasForeignKey("TecnicoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Clientes");
 
                     b.Navigation("Tecnicos");
                 });

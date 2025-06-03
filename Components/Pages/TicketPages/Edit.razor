@@ -1,0 +1,149 @@
+﻿@page "/Ticket/Edit/{id:int}"
+@inject ClienteService clienteService
+@inject TecnicoService tecnicoService
+@inject TicketService ticketService
+@inject NavigationManager navigation
+@rendermode InteractiveServer
+
+<EditForm Model="Tickets" OnValidSubmit="Actualizar">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header text-center bg-success text-white">
+                <h3 class="card-title"><strong>Editar Ticket</strong></h3>
+            </div>
+
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">TicketId</label>
+                    <InputNumber class="form-control" @bind-Value="Tickets.TicketId" readonly />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Fecha</label>
+                    <InputDate class="form-control" @bind-Value="Tickets.Fecha" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Prioridad</label>
+                    <InputSelect class="form-select" @bind-Value="Tickets.Prioridad">
+                        <option value="" disabled>Seleccione una prioridad</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Media">Media</option>
+                        <option value="Baja">Baja</option>
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Asunto</label>
+                    <InputText class="form-control" @bind-Value="Tickets.Asunto" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Descripcion</label>
+                    <InputText class="form-control" @bind-Value="Tickets.Descripcion" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Tiempo Invertido</label>
+                    <div class="input-group">
+                        <InputNumber class="form-control" @bind-Value="Dias" placeholder="Días" />
+                        <span class="input-group-text">días</span>
+                        <InputNumber class="form-control" @bind-Value="Horas" placeholder="Horas" />
+                        <span class="input-group-text">horas</span>
+                        <InputNumber class="form-control" @bind-Value="Minutos" placeholder="Minutos" />
+                        <span class="input-group-text">min</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Cliente</label>
+                    <InputSelect class="form-control" @bind-Value="Tickets.ClienteId">
+                        <option value="0" disabled>Elija una opción</option>
+                        @foreach (var Cliente in clientes)
+                        {
+                            <option value="@Cliente.ClienteId">@Cliente.Nombres</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Técnico</label>
+                    <InputSelect class="form-control" @bind-Value="Tickets.TecnicoId">
+                        <option value="0" disabled>Elija una opción</option>
+                        @foreach (var Tecnico in tecnico)
+                        {
+                            <option value="@Tecnico.TecnicoId">@Tecnico.Nombres</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            @* Footer *@ 
+            <div class="card-footer text-center mt-2">
+
+                @* Botón de guardar *@
+                <button type="submit" class="btn btn-outline-success ml-2">
+                    <span class="bi bi-check-circle-fill"></span> Guardar
+                </button>
+                @* Botón de eliminar *@
+                <button type="button" class="btn btn-outline-danger ml-2" @onclick="Eliminar">
+                    <span class="bi bi-trash-fill"></span> Eliminar
+                </button>
+                @* Botón de Volver *@
+                <a type="button" href="/Tecnico/Index/" class="btn btn-secondary">
+                    <i class="bi bi-arrow-bar-left"></i> Volver
+                </a>
+
+
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter] public int id { get; set; }
+    public Tickets Tickets { get; set; } = new Tickets();
+    public List<Tecnicos> tecnico { get; set; } = new List<Tecnicos>();
+    public List<Clientes> clientes { get; set; } = new List<Clientes>();
+    private int Dias { get; set; }
+    private int Horas { get; set; }
+    private int Minutos { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        clientes = await clienteService.Listar(t => true);
+        tecnico = await tecnicoService.Listar(t => true);
+
+        Tickets = await ticketService.Buscar(id);
+
+        int tiempoTotal = Tickets.TiempoInvertido;
+        Dias = tiempoTotal / 1440;
+        Horas = (tiempoTotal % 1440) / 60;
+        Minutos = tiempoTotal % 60;
+    }
+
+    private async Task Actualizar()
+    {
+        Tickets.TiempoInvertido = (Dias * 1440) + (Horas * 60) + Minutos;
+
+        bool actualizado = await ticketService.Modificar(Tickets);
+
+        if (actualizado)
+        {
+            navigation.NavigateTo("/Ticket/Index");
+        }
+    }
+    private async Task Eliminar()
+    {
+        bool eliminado = await ticketService.Eliminar(Tickets.TicketId);
+
+        if (eliminado)
+        {
+            navigation.NavigateTo("/Ticket/Index");
+        }
+    }
+
+}

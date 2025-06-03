@@ -16,7 +16,6 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var ConStr = builder.Configuration.GetConnectionString("ConStr");
-
 builder.Services.AddDbContextFactory<Contexto>(o => o.UseSqlServer(ConStr));
 
 builder.Services.AddBlazorBootstrap();
@@ -24,9 +23,8 @@ builder.Services.AddBlazorBootstrap();
 //Inyeccion del services
 builder.Services.AddScoped<TecnicoService>();
 builder.Services.AddScoped<ClienteService>();
+builder.Services.AddScoped<TicketService>();
 builder.Services.AddBlazoredToast();
-
-
 
 var app = builder.Build();
 
