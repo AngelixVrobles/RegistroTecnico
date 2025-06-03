@@ -55,7 +55,7 @@ namespace RegistroTecnico.Migrations
 
                     b.HasIndex("TecnicoId");
 
-                    b.ToTable("Clientes");
+                    b.ToTable("Clientes", (string)null);
                 });
 
             modelBuilder.Entity("RegistroTecnico.Models.Tecnicos", b =>
@@ -75,7 +75,7 @@ namespace RegistroTecnico.Migrations
 
                     b.HasKey("TecnicoId");
 
-                    b.ToTable("Tecnicos");
+                    b.ToTable("Tecnicos", (string)null);
                 });
 
             modelBuilder.Entity("Tickets", b =>
@@ -116,7 +116,7 @@ namespace RegistroTecnico.Migrations
 
                     b.HasIndex("TecnicoId");
 
-                    b.ToTable("Tickets");
+                    b.ToTable("Tickets", (string)null);
                 });
 
             modelBuilder.Entity("RegistroTecnico.Models.Clientes", b =>
