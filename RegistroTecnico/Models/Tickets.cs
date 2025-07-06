@@ -32,3 +32,10 @@ public class Tickets
     [ForeignKey("TecnicoId")]
     public virtual Tecnicos Tecnicos { get; set; } = null!;
 }
+
+public class PaginacionTickets
+{
+    public List<Tickets> Tickets { get; set; } = new();
+    public int TotalRegistros { get; set; }
+}
+

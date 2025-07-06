@@ -12,3 +12,10 @@ public class Sistemas
     [Required(ErrorMessage = "El campo es obligatorio")]
     public int Complejidad { get; set; }
 }
+
+public class PaginacionSistemas
+{
+    public List<Sistemas> Sistemas { get; set; } = new();
+    public int TotalRegistros { get; set; }
+}
+

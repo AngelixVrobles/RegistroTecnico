@@ -37,3 +37,5 @@ public class PaginacionClientes
     public List<Clientes> Clientes { get; set; } = new();
     public int TotalRegistros { get; set; }
 }
+
+
