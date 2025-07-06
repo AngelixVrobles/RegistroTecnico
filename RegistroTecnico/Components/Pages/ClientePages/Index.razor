@@ -1,0 +1,236 @@
+﻿@page "/Cliente/Index"
+@inject ClienteService clienteService
+@inject TecnicoService tecnicoService
+@inject TicketService ticketService
+@inject NavigationManager navigation
+@using System.Globalization
+@using System.Linq.Expressions
+@rendermode InteractiveServer
+
+<PageTitle>Clientes</PageTitle>
+
+<div class="container mt-3">
+    <div class="card shadow-lg">
+        <div class="card-header mb-1 text-center bg-primary text-white">
+            <h3 class="card-title m-1"><strong>Consulta de Clientes</strong></h3>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row mb-2">
+                <div class="col-md-3">
+                    <label class="form-label"><strong>Filtrar por</strong></label>
+                    <InputSelect class="form-select" @bind-Value="filtro">
+                        <option value="" disabled selected>Elija una opción</option>
+                        <option value="id">ClienteId</option>
+                        <option value="Nombres">Nombres</option>
+                        <option value="Fecha">Fecha</option>
+                        <option value="Direccion">Direccion</option>
+                        <option value="RNC">RNC</option>
+                        <option value="LimiteCredito">Límite de Crédito</option>
+                    </InputSelect>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label"><strong>Búsqueda</strong></label>
+                    <div class="input-group">
+                        <input class="form-control" @bind="valorFiltro" placeholder="Buscar" />
+                        <button type="button" class="btn btn-primary bi bi-search" @onclick="Buscar">
+                            Buscar
+                        </button>
+                    </div>
+
+                </div>
+                <div class="col-5 text-end">
+                    <a href="/Cliente/Create" class="btn btn-success">
+                        <span class="bi bi-plus-square"></span> Crear
+                    </a>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <label class="form-label"><strong>Desde Fecha</strong></label>
+                    <InputDate class="form-control" @bind-Value="Desde" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label"><strong>Hasta Fecha</strong></label>
+                    <InputDate class="form-control" @bind-Value="Hasta" />
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-warning bi bi-arrow-clockwise" @onclick="Restablecer">
+                        Restablecer Filtros
+                    </button>
+                </div>
+
+            </div>
+
+
+            @if (ClientePaginado.Any())
+            {
+                <table class="table table-hover table-bordered text-center mt-4">
+                    <thead class="table-striped text-black">
+                        <tr>
+                            <th>Id</th>
+                            <th>Nombres</th>
+                            <th>Fecha</th>
+                            <th>Dirección</th>
+                            <th>RNC</th>
+                            <th>Límite Crédito</th>
+                            <th>Técnico</th>
+                            <th>Editar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cliente in ClientePaginado)
+                        {
+                            var tecnico = Tecnicos.FirstOrDefault(t => t.TecnicoId == cliente.TecnicoId);
+                            <tr>
+                                <td>@cliente.ClienteId</td>
+                                <td>@cliente.Nombres</td>
+                                <td>@cliente.FechaIngreso.ToShortDateString()</td>
+                                <td>@cliente.Direccion</td>
+                                <td>@cliente.RNC</td>
+                                <td>@cliente.LimiteCredito.ToString("C2", CultureInfo.CurrentCulture)</td>
+                                <td>@(tecnico?.Nombres ?? "No encontrado")</td>
+                                <td>
+                                    <a href="/Cliente/Edit/@cliente.ClienteId" class="btn btn-outline-success bi bi-pencil-fill"></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-outline-secondary" @onclick="AnteriorPagina" disabled="@(!PuedeRetroceder)">Anterior</button>
+                    <span>Página @PaginaActual de @TotalPaginas</span>
+                    <button class="btn btn-outline-secondary" @onclick="SiguientePagina" disabled="@(!PuedeAvanzar)">Siguiente</button>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning text-center mt-4">No se encontraron resultados.</div>
+            }
+        </div>
+
+        <div class="card-footer d-flex justify-content-between">
+            <label><strong>Cantidad: @FilteredClients.Count()</strong></label>
+            <label><strong>Límite de Crédito Total: @FilteredClients.Sum(c => c.LimiteCredito).ToString("C2", CultureInfo.CurrentCulture)</strong></label>
+        </div>
+    </div>
+</div>
+
+@code {
+    public List<Clientes> AllClients = new();
+    public List<Clientes> FilteredClients = new();
+    public List<Tecnicos> Tecnicos = new();
+
+    private int PaginaActual = 1;
+    private int TamañoPagina = 10;
+
+    private IEnumerable<Clientes> ClientePaginado => FilteredClients
+        .OrderByDescending(c => c.ClienteId == 1) 
+        .ThenBy(c => c.ClienteId) 
+        .Skip((PaginaActual - 1) * TamañoPagina)
+        .Take(TamañoPagina);
+
+    private int TotalPaginas => (int)Math.Ceiling((double)FilteredClients.Count / TamañoPagina);
+    private bool PuedeRetroceder => PaginaActual > 1;
+    private bool PuedeAvanzar => PaginaActual < TotalPaginas;
+
+    private string filtro = "";
+    private string valorFiltro = "";
+    public DateTime? Desde { get; set; } = null;
+    public DateTime? Hasta { get; set; } = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllClients();
+        await ApplyFiltersAndRefresh();
+        Tecnicos = await tecnicoService.Listar(t => true);
+    }
+
+    private async Task LoadAllClients()
+    {
+        AllClients = await clienteService.Listar(c => true);
+    }
+
+    private async Task ApplyFiltersAndRefresh()
+    {
+        PaginaActual = 1;
+
+        var clientsToFilter = AllClients.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(valorFiltro))
+        {
+            if (filtro == "id" && int.TryParse(valorFiltro, out int id))
+            {
+                clientsToFilter = clientsToFilter.Where(c => c.ClienteId == id);
+            }
+            else if (filtro == "Nombres")
+            {
+                clientsToFilter = clientsToFilter.Where(c => c.Nombres.ToLower().Contains(valorFiltro.ToLower()));
+            }
+            else if (filtro == "Direccion")
+            {
+                clientsToFilter = clientsToFilter.Where(c => c.Direccion.ToLower().Contains(valorFiltro.ToLower()));
+            }
+            else if (filtro == "RNC")
+            {
+                clientsToFilter = clientsToFilter.Where(c => c.RNC.ToLower().Contains(valorFiltro.ToLower()));
+            }
+            else if (filtro == "LimiteCredito" && decimal.TryParse(valorFiltro, out decimal limite))
+            {
+                clientsToFilter = clientsToFilter.Where(c => c.LimiteCredito == limite);
+            }
+            else if (filtro == "Fecha" && DateTime.TryParse(valorFiltro, out DateTime fecha))
+            {
+                clientsToFilter = clientsToFilter.Where(c => c.FechaIngreso.Date == fecha.Date);
+            }
+        }
+
+        if (Desde.HasValue)
+        {
+            clientsToFilter = clientsToFilter.Where(c => c.FechaIngreso.Date >= Desde.Value.Date);
+        }
+        if (Hasta.HasValue)
+        {
+            clientsToFilter = clientsToFilter.Where(c => c.FechaIngreso.Date <= Hasta.Value.Date);
+        }
+
+        FilteredClients = clientsToFilter.ToList();
+        StateHasChanged();
+    }
+
+    private async Task Buscar()
+    {
+        await ApplyFiltersAndRefresh();
+    }
+
+    private async Task Restablecer()
+    {
+        filtro = "";
+        valorFiltro = "";
+        Desde = null;
+        Hasta = null;
+        await ApplyFiltersAndRefresh();
+    }
+
+    private void SiguientePagina()
+    {
+        if (PuedeAvanzar)
+        {
+            PaginaActual++;
+            StateHasChanged();
+        }
+    }
+
+    private void AnteriorPagina()
+    {
+        if (PuedeRetroceder)
+        {
+            PaginaActual--;
+            StateHasChanged();
+        }
+    }
+}
