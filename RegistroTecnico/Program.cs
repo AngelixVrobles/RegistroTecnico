@@ -24,6 +24,8 @@ builder.Services.AddBlazorBootstrap();
 builder.Services.AddScoped<TecnicoService>();
 builder.Services.AddScoped<ClienteService>();
 builder.Services.AddScoped<TicketService>();
+builder.Services.AddScoped<SistemaServices>();
+
 builder.Services.AddBlazoredToast();
 
 var app = builder.Build();

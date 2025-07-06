@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RegistroTecnico.DAL;
 
@@ -11,9 +12,11 @@ using RegistroTecnico.DAL;
 namespace RegistroTecnico.Migrations
 {
     [DbContext(typeof(Contexto))]
-    partial class ContextoModelSnapshot : ModelSnapshot
+    [Migration("20250706223700_Sistemas")]
+    partial class Sistemas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -55,7 +58,27 @@ namespace RegistroTecnico.Migrations
 
                     b.HasIndex("TecnicoId");
 
-                    b.ToTable("Clientes", (string)null);
+                    b.ToTable("Clientes");
+                });
+
+            modelBuilder.Entity("RegistroTecnico.Models.Sistemas", b =>
+                {
+                    b.Property<int>("SistemasId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SistemasId"));
+
+                    b.Property<int>("Complejidad")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("SistemasId");
+
+                    b.ToTable("Sistemas");
                 });
 
             modelBuilder.Entity("RegistroTecnico.Models.Tecnicos", b =>
@@ -75,7 +98,7 @@ namespace RegistroTecnico.Migrations
 
                     b.HasKey("TecnicoId");
 
-                    b.ToTable("Tecnicos", (string)null);
+                    b.ToTable("Tecnicos");
                 });
 
             modelBuilder.Entity("Tickets", b =>
@@ -116,7 +139,7 @@ namespace RegistroTecnico.Migrations
 
                     b.HasIndex("TecnicoId");
 
-                    b.ToTable("Tickets", (string)null);
+                    b.ToTable("Tickets");
                 });
 
             modelBuilder.Entity("RegistroTecnico.Models.Clientes", b =>

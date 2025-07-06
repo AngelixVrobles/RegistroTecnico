@@ -29,6 +29,7 @@ namespace RegistroTecnico.DAL
                 .OnDelete(DeleteBehavior.Restrict); // o NoAction
         }
 
+
     }
 }
 

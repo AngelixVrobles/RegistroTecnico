@@ -1,4 +1,4 @@
-﻿@page "/Ticket/Index"
+﻿@page "/Cliente/Index"
 @inject ClienteService clienteService
 @inject TecnicoService tecnicoService
 @inject TicketService ticketService
@@ -7,27 +7,27 @@
 @using System.Linq.Expressions
 @rendermode InteractiveServer
 
-<PageTitle>Tickets</PageTitle>
+<PageTitle>Clientes</PageTitle>
 
 <div class="container mt-3">
     <div class="card shadow-lg">
-        <div class="card-header mb-1 text-center bg-white border-0">
-            <h2 class="card-title m-3"><strong>Consulta de Tickets</strong></h2>
+        <div class="card-header mb-1 text-center bg-primary text-white">
+            <h3 class="card-title m-1"><strong>Consulta de Clientes</strong></h3>
         </div>
 
         <div class="card-body">
+
             <div class="row mb-2">
                 <div class="col-md-3">
                     <label class="form-label"><strong>Filtrar por</strong></label>
                     <InputSelect class="form-select" @bind-Value="filtro">
-                        <option value=""disabled selected>Elija una opción</option>
-                        <option value="id">TicketId</option>
-                        <option value="ClienteNombres">Cliente Nombres</option>
-                        <option value="Asunto">Asunto</option>
-                        <option value="Prioridad">Prioridad</option>
-                        <option value="Descripcion">Descripción</option>
-                        <option value="TiempoInvertido">Tiempo Invertido</option>
-                        <option value="TecnicoNombres">Técnico Nombres</option>
+                        <option value="" disabled selected>Elija una opción</option>
+                        <option value="id">ClienteId</option>
+                        <option value="Nombres">Nombres</option>
+                        <option value="Fecha">Fecha</option>
+                        <option value="Direccion">Direccion</option>
+                        <option value="RNC">RNC</option>
+                        <option value="LimiteCredito">Límite de Crédito</option>
                     </InputSelect>
                 </div>
 
@@ -39,9 +39,10 @@
                             Buscar
                         </button>
                     </div>
+
                 </div>
                 <div class="col-5 text-end">
-                    <a href="/Ticket/Create" class="btn btn-success">
+                    <a href="/Cliente/Create" class="btn btn-success">
                         <span class="bi bi-plus-square"></span> Crear
                     </a>
                 </div>
@@ -61,42 +62,39 @@
                         Restablecer Filtros
                     </button>
                 </div>
+
             </div>
 
-            @if (TicketPaginado.Any())
+
+            @if (ClientePaginado.Any())
             {
                 <table class="table table-hover table-bordered text-center mt-4">
                     <thead class="table-striped text-black">
                         <tr>
                             <th>Id</th>
+                            <th>Nombres</th>
                             <th>Fecha</th>
-                            <th>Descripción</th>
-                            <th>Prioridad</th>
-                            <th>Cliente</th>
-                            <th>Asunto</th>
+                            <th>Dirección</th>
+                            <th>RNC</th>
+                            <th>Límite Crédito</th>
                             <th>Técnico</th>
-                            <th>Tiempo Invertido</th>
                             <th>Editar</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var ticket in TicketPaginado)
+                        @foreach (var cliente in ClientePaginado)
                         {
-                            var Cliente = AllClients.FirstOrDefault(c => c.ClienteId == ticket.ClienteId);
-                            var Tecnico = AllTecnicos.FirstOrDefault(t => t.TecnicoId == ticket.TecnicoId);
-
+                            var tecnico = Tecnicos.FirstOrDefault(t => t.TecnicoId == cliente.TecnicoId);
                             <tr>
-                                <td>@ticket.TicketId</td>
-                                <td>@ticket.Fecha.ToShortDateString()</td>
-                                <td>@ticket.Descripcion</td>
-                                <td>@ticket.Prioridad</td>
-                                <td>@(Cliente?.Nombres ?? "No encontrado")</td>
-                                <td>@ticket.Asunto</td>
-                                <td>@(Tecnico?.Nombres ?? "No encontrado")</td>
-                                <td>@ticket.TiempoInvertido</td>
-
+                                <td>@cliente.ClienteId</td>
+                                <td>@cliente.Nombres</td>
+                                <td>@cliente.FechaIngreso.ToShortDateString()</td>
+                                <td>@cliente.Direccion</td>
+                                <td>@cliente.RNC</td>
+                                <td>@cliente.LimiteCredito.ToString("C2", CultureInfo.CurrentCulture)</td>
+                                <td>@(tecnico?.Nombres ?? "No encontrado")</td>
                                 <td>
-                                    <a href="/Ticket/Edit/@ticket.TicketId" class="btn btn-outline-success bi bi-pencil-fill"></a>
+                                    <a href="/Cliente/Edit/@cliente.ClienteId" class="btn btn-outline-success bi bi-pencil-fill"></a>
                                 </td>
                             </tr>
                         }
@@ -116,27 +114,27 @@
         </div>
 
         <div class="card-footer d-flex justify-content-between">
-            <label><strong>Cantidad: @FilteredTickets.Count()</strong></label>
-            <label><strong>Total de Minutos Trabajados en Tickets: @FilteredTickets.Sum(c => c.TiempoInvertido).ToString(CultureInfo.CurrentCulture)</strong></label>
+            <label><strong>Cantidad: @FilteredClients.Count()</strong></label>
+            <label><strong>Límite de Crédito Total: @FilteredClients.Sum(c => c.LimiteCredito).ToString("C2", CultureInfo.CurrentCulture)</strong></label>
         </div>
     </div>
 </div>
 
 @code {
-    public List<Tickets> AllTickets = new();
-    public List<Tickets> FilteredTickets = new();
     public List<Clientes> AllClients = new();
-    public List<Tecnicos> AllTecnicos = new();
+    public List<Clientes> FilteredClients = new();
+    public List<Tecnicos> Tecnicos = new();
 
     private int PaginaActual = 1;
     private int TamañoPagina = 10;
 
-    private IEnumerable<Tickets> TicketPaginado => FilteredTickets
-        .OrderByDescending(t => t.TicketId)
+    private IEnumerable<Clientes> ClientePaginado => FilteredClients
+        .OrderByDescending(c => c.ClienteId == 1) 
+        .ThenBy(c => c.ClienteId) 
         .Skip((PaginaActual - 1) * TamañoPagina)
         .Take(TamañoPagina);
 
-    private int TotalPaginas => (int)Math.Ceiling((double)FilteredTickets.Count / TamañoPagina);
+    private int TotalPaginas => (int)Math.Ceiling((double)FilteredClients.Count / TamañoPagina);
     private bool PuedeRetroceder => PaginaActual > 1;
     private bool PuedeAvanzar => PaginaActual < TotalPaginas;
 
@@ -147,64 +145,60 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAllData();
+        await LoadAllClients();
         await ApplyFiltersAndRefresh();
+        Tecnicos = await tecnicoService.Listar(t => true);
     }
 
-    private async Task LoadAllData()
+    private async Task LoadAllClients()
     {
-        AllTickets = await ticketService.Listar(t => true);
         AllClients = await clienteService.Listar(c => true);
-        AllTecnicos = await tecnicoService.Listar(t => true);
     }
 
     private async Task ApplyFiltersAndRefresh()
     {
         PaginaActual = 1;
-        var ticketsToFilter = AllTickets.AsQueryable();
+
+        var clientsToFilter = AllClients.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(valorFiltro))
         {
-            if (filtro == "id" && int.TryParse(valorFiltro, out int ticketId))
+            if (filtro == "id" && int.TryParse(valorFiltro, out int id))
             {
-                ticketsToFilter = ticketsToFilter.Where(t => t.TicketId == ticketId);
+                clientsToFilter = clientsToFilter.Where(c => c.ClienteId == id);
             }
-            else if (filtro == "ClienteNombres")
+            else if (filtro == "Nombres")
             {
-                ticketsToFilter = ticketsToFilter.Where(t => AllClients.Any(c => c.ClienteId == t.ClienteId && c.Nombres.ToLower().Contains(valorFiltro.ToLower())));
+                clientsToFilter = clientsToFilter.Where(c => c.Nombres.ToLower().Contains(valorFiltro.ToLower()));
             }
-            else if (filtro == "Asunto")
+            else if (filtro == "Direccion")
             {
-                ticketsToFilter = ticketsToFilter.Where(t => t.Asunto.ToLower().Contains(valorFiltro.ToLower()));
+                clientsToFilter = clientsToFilter.Where(c => c.Direccion.ToLower().Contains(valorFiltro.ToLower()));
             }
-            else if (filtro == "Prioridad")
+            else if (filtro == "RNC")
             {
-                ticketsToFilter = ticketsToFilter.Where(t => t.Prioridad.ToLower().Contains(valorFiltro.ToLower()));
+                clientsToFilter = clientsToFilter.Where(c => c.RNC.ToLower().Contains(valorFiltro.ToLower()));
             }
-            else if (filtro == "Descripcion")
+            else if (filtro == "LimiteCredito" && decimal.TryParse(valorFiltro, out decimal limite))
             {
-                ticketsToFilter = ticketsToFilter.Where(t => t.Descripcion.ToLower().Contains(valorFiltro.ToLower()));
+                clientsToFilter = clientsToFilter.Where(c => c.LimiteCredito == limite);
             }
-            else if (filtro == "TiempoInvertido" && decimal.TryParse(valorFiltro, out decimal tiempo))
+            else if (filtro == "Fecha" && DateTime.TryParse(valorFiltro, out DateTime fecha))
             {
-                ticketsToFilter = ticketsToFilter.Where(t => t.TiempoInvertido == tiempo);
-            }
-            else if (filtro == "TecnicoNombres")
-            {
-                ticketsToFilter = ticketsToFilter.Where(t => AllTecnicos.Any(tec => tec.TecnicoId == t.TecnicoId && tec.Nombres.ToLower().Contains(valorFiltro.ToLower())));
+                clientsToFilter = clientsToFilter.Where(c => c.FechaIngreso.Date == fecha.Date);
             }
         }
 
         if (Desde.HasValue)
         {
-            ticketsToFilter = ticketsToFilter.Where(t => t.Fecha.Date >= Desde.Value.Date);
+            clientsToFilter = clientsToFilter.Where(c => c.FechaIngreso.Date >= Desde.Value.Date);
         }
         if (Hasta.HasValue)
         {
-            ticketsToFilter = ticketsToFilter.Where(t => t.Fecha.Date <= Hasta.Value.Date);
+            clientsToFilter = clientsToFilter.Where(c => c.FechaIngreso.Date <= Hasta.Value.Date);
         }
 
-        FilteredTickets = ticketsToFilter.ToList();
+        FilteredClients = clientsToFilter.ToList();
         StateHasChanged();
     }
 

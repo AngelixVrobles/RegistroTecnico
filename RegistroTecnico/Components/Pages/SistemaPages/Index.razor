@@ -1,21 +1,25 @@
-﻿@page "/Sistema/Index"
+@page "/Sistema/Index"
+
+@rendermode InteractiveServer
 @inject SistemaServices sistemaService
 @inject NavigationManager navigation
-@rendermode InteractiveServer
+
 
 <PageTitle>Sistemas</PageTitle>
 
 <div class="container mt-3">
     <div class="card shadow-lg">
-        <div class="card-header mb-1 text-center bg-white border-0">
-            <h2 class="card-title m-3"><strong>Consulta de Sistemas</strong></h2>
+
+        <div class="card-header mb-1 text-center bg-primary text-white">
+            <h3 class="card-title m-1"><strong>Consulta de Sistemas</strong></h3>
         </div>
 
         <div class="card-body">
-            <div class="row mb-3">
+            <div class="row mb-2">
                 <div class="col-md-3">
                     <label class="form-label"><strong>Filtrar por</strong></label>
-                    <InputSelect class="form-select" @bind-Value="filtro" @onchange="OnFiltroChanged">
+                    <InputSelect class="form-select" @bind-Value="filtro">
+
                         <option value="" disabled selected>Elija una opción</option>
                         <option value="Id">SistemaId</option>
                         <option value="Descripcion">Descripción</option>
@@ -26,36 +30,32 @@
                 <div class="col-md-4">
                     <label class="form-label"><strong>Búsqueda</strong></label>
                     <div class="input-group">
-                        @if (filtro == "Complejidad")
-                        {
-                            <InputSelect class="form-select" @bind-Value="valorFiltro">
-                                <option value="">Seleccione</option>
-                                <option value="1">1 - Baja</option>
-                                <option value="2">2 - Media</option>
-                                <option value="3">3 - Alta</option>
-                            </InputSelect>
-                        }
-                        else
-                        {
-                            <input class="form-control" @bind="valorFiltro" placeholder="Buscar" />
-                        }
+
+                        <input class="form-control" @bind="valorFiltro" placeholder="Buscar" />
+
                         <button type="button" class="btn btn-primary bi bi-search" @onclick="Buscar">
                             Buscar
                         </button>
                     </div>
                 </div>
 
-                <div class="col-md-5 text-end d-flex align-items-end justify-content-end">
-                    <button class="btn btn-warning me-2 bi bi-arrow-clockwise" @onclick="Restablecer">
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-warning bi bi-arrow-clockwise" @onclick="Restablecer">
                         Restablecer Filtros
                     </button>
+                </div>
+
+                <div class="col-md-2 text-end">
+
                     <a href="/Sistema/Create" class="btn btn-success">
                         <span class="bi bi-plus-square"></span> Crear
                     </a>
                 </div>
             </div>
 
-            @if (SistemaPaginado.Any())
+            @if (SistemaFiltrada.Any())
+
             {
                 <table class="table table-hover table-bordered text-center mt-4">
                     <thead class="table-striped text-black">
@@ -67,12 +67,16 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var sistema in SistemaPaginado)
+
+                        @foreach (var sistema in SistemaPaginada)
+
                         {
                             <tr>
                                 <td>@sistema.SistemasId</td>
                                 <td>@sistema.Descripcion</td>
-                                <td>@GetComplejidadTexto(sistema.Complejidad)</td>
+
+                                <td>@ObtenerNombreComplejidad(sistema.Complejidad)</td>
+
                                 <td>
                                     <a href="/Sistema/Edit/@sistema.SistemasId" class="btn btn-outline-success bi bi-pencil-fill"></a>
                                 </td>
@@ -94,24 +98,32 @@
         </div>
 
         <div class="card-footer d-flex justify-content-between">
-            <label><strong>Cantidad: @FilteredSistemas.Count()</strong></label>
+
+            <label><strong>Cantidad: @SistemaFiltrada.Count()</strong></label>
+
         </div>
     </div>
 </div>
 
 @code {
-    public List<Sistemas> AllSistemas = new();
-    public List<Sistemas> FilteredSistemas = new();
+
+    public List<Sistemas> Sistema = new();
+    public List<Sistemas> SistemaFiltrada = new();
+
 
     private int PaginaActual = 1;
     private int TamañoPagina = 10;
 
-    private IEnumerable<Sistemas> SistemaPaginado => FilteredSistemas
+
+    private IEnumerable<Sistemas> SistemaPaginada => SistemaFiltrada
+
         .OrderByDescending(s => s.SistemasId)
         .Skip((PaginaActual - 1) * TamañoPagina)
         .Take(TamañoPagina);
 
-    private int TotalPaginas => (int)Math.Ceiling((double)FilteredSistemas.Count / TamañoPagina);
+
+    private int TotalPaginas => (int)Math.Ceiling((double)SistemaFiltrada.Count / TamañoPagina);
+
     private bool PuedeRetroceder => PaginaActual > 1;
     private bool PuedeAvanzar => PaginaActual < TotalPaginas;
 
@@ -120,77 +132,53 @@
 
     protected override async Task OnInitializedAsync()
     {
-        AllSistemas = await sistemaService.Listar(t => true);
-        await AplicarFiltros();
+
+        Sistema = await sistemaService.Listar(t => true);
+        SistemaFiltrada = Sistema;
+
     }
 
     private async Task Buscar()
     {
-        await AplicarFiltros();
-    }
 
-    private async Task AplicarFiltros()
-    {
         PaginaActual = 1;
-
-        if (!string.IsNullOrEmpty(filtro))
+        if (!string.IsNullOrWhiteSpace(valorFiltro))
         {
-            switch (filtro)
+            if (filtro == "Id" && int.TryParse(valorFiltro, out int SistemaId))
             {
-                case "Id":
-                    FilteredSistemas = AllSistemas.Where(s => s.SistemasId.ToString().Contains(valorFiltro)).ToList();
-                    break;
-                case "Descripcion":
-                    FilteredSistemas = AllSistemas.Where(s => s.Descripcion.Contains(valorFiltro, StringComparison.OrdinalIgnoreCase)).ToList();
-                    break;
-                case "Complejidad":
-                    if (int.TryParse(valorFiltro, out var comp))
-                    {
-                        FilteredSistemas = AllSistemas.Where(s => s.Complejidad == comp).ToList();
-                    }
-                    else
-                    {
-                        FilteredSistemas = new(); // vacío si el valor no es válido
-                    }
-                    break;
-                default:
-                    FilteredSistemas = AllSistemas;
-                    break;
+                SistemaFiltrada = await sistemaService.Listar(s => s.SistemasId == SistemaId);
+            }
+            else if (filtro == "Descripcion")
+            {
+                SistemaFiltrada = await sistemaService.Listar(s => s.Descripcion.ToLower().Contains(valorFiltro.ToLower()));
+            }
+            else if (filtro == "Complejidad")
+            {
+                var complejidadTexto = valorFiltro.ToLower();
+                SistemaFiltrada = await sistemaService.Listar(s => ObtenerNombreComplejidad(s.Complejidad).ToLower().Contains(complejidadTexto));
+
             }
         }
         else
         {
-            FilteredSistemas = AllSistemas;
+
+            SistemaFiltrada = await sistemaService.Listar(t => true);
         }
 
-        await InvokeAsync(StateHasChanged);
     }
 
     private async Task Restablecer()
     {
         filtro = "";
         valorFiltro = "";
-        await AplicarFiltros();
+
+        PaginaActual = 1;
+        SistemaFiltrada = await sistemaService.Listar(t => true);
     }
 
-    private void AnteriorPagina()
+    private string ObtenerNombreComplejidad(int valor)
     {
-        if (PaginaActual > 1)
-        {
-            PaginaActual--;
-        }
-    }
-
-    private void SiguientePagina()
-    {
-        if (PaginaActual < TotalPaginas)
-        {
-            PaginaActual++;
-        }
-    }
-
-    private string GetComplejidadTexto(int complejidad) =>
-        complejidad switch
+        return valor switch
         {
             1 => "Baja",
             2 => "Media",
@@ -198,10 +186,24 @@
             _ => "Desconocida"
         };
 
-    private async Task OnFiltroChanged(ChangeEventArgs e)
+    }
+
+    private void SiguientePagina()
     {
-        filtro = e.Value?.ToString();
-        valorFiltro = ""; // limpiar el campo al cambiar tipo de filtro
-        await AplicarFiltros();
+
+        if (PuedeAvanzar)
+
+        {
+            PaginaActual++;
+        }
+    }
+
+    private void AnteriorPagina()
+    {
+        if (PuedeRetroceder)
+        {
+            PaginaActual--;
+        }
+
     }
 }
