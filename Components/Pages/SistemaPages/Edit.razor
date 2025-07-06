@@ -1,0 +1,83 @@
+﻿@page "/Sistema/Edit/{SistemaId:int}"
+@inject SistemaServices sistemaService
+@inject NavigationManager navigation
+@rendermode InteractiveServer
+
+<PageTitle>Modificar</PageTitle>
+<EditForm Model="Sistema" OnValidSubmit="Modificar">
+    <DataAnnotationsValidator />
+
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header text-center">
+                <h5 class="card-title">Crear Sistema</h5>
+            </div>
+
+            <div class="card-body">
+                @*Id*@
+                <div class="mb-3">
+                    <label class="form-label"><strong>SistemasId</strong></label>
+                    <InputNumber class="form-control" @bind-Value="Sistema.SistemasId" READONLY></InputNumber>
+                </div>
+
+                @*Descripcion*@
+                <div class="mb-3">
+                    <label class="form-label" for="Descripcion"><strong>Descripcion</strong></label>
+                    <InputText id="Descripcion" class="form-control" @bind-Value="Sistema.Descripcion"></InputText>
+                    <ValidationMessage For="@(()=> Sistema.Descripcion)"></ValidationMessage>
+                </div>
+
+                @*Complejidad*@
+                <div class="mb-3">
+                    <label class="form-label" for="Complejidad"><strong>Complejidad</strong></label>
+                    <InputNumber id="Complejidad" class="form-control" @bind-Value="Sistema.Complejidad"></InputNumber>
+                    <ValidationMessage For="@(()=> Sistema.Complejidad)"></ValidationMessage>
+                </div>
+
+            </div>
+
+            @* footer *@
+            <div class="card-footer text-center mt-3">
+                <button type="submit" class="btn btn-outline-success ml-2"><span class="bi bi-check-circle-fill"></span> Guardar </button>
+                <a type="button" href="/Sistemas/Index/" class="btn btn-outline-danger"><span class="bi bi-arrow-bar-left"></span> Volver </a>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int SistemaId { get; set; }
+    public Sistemas Sistema { get; set; } = new Sistemas();
+    [Inject] protected ToastService ToastService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (SistemaId > 0)
+        {
+            Sistema = await sistemaService.Buscar(SistemaId);
+        }
+    }
+
+    public Edit(ToastService toastService)
+    {
+        ToastService = toastService;
+    }
+
+    public async Task Modificar()
+    {
+        if (SistemaId > 0)
+        {
+            await sistemaService.Guardar(Sistema);
+            ToastService.Notify(new(ToastType.Success, "Exito", $"Sistema editado correctamente."));
+            navigation.NavigateTo("/Sistemas/Index/");
+        }
+
+        else
+        {
+            ToastService.Notify(new(ToastType.Danger, "Error", $"No se pudo editar el sistema."));
+        }
+        
+    }
+
+}
