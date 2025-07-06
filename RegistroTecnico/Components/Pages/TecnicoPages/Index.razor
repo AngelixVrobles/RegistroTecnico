@@ -1,0 +1,122 @@
+﻿@page "/Tecnico/Index"
+@rendermode InteractiveServer
+@inject TecnicoService tecnicoService
+@inject NavigationManager navigation
+@using System.Globalization;
+
+<PageTitle>Técnicos</PageTitle>
+
+<div class="container mt-3">
+    <div class="card shadow-lg">
+        <div class="card-header mb-1 text-center bg-primary text-white">
+            <h3 class="card-title m-1"><strong>Consulta de Tecnicos</strong></h3>
+        </div>
+
+        <div class="card-body">
+
+            @* Etiquetas + Botón Crear *@
+            <div class="row align-items-end mb-1">
+                <div class="col-3">
+                    <label class="col-form-label"><strong>Filtrar por:</strong></label>
+                </div>
+                <div class="col-4">
+                    <label class="col-form-label"><strong>Búsqueda</strong></label>
+                </div>
+                <div class="col-5 text-end">
+                    <a href="/Tecnico/Create" class="btn btn-success">
+                        <span class="bi bi-plus-square"></span> Crear
+                    </a>
+                </div>
+            </div>
+
+            @* Inputs y botón de búsqueda *@
+            <div class="row align-items-center">
+                <div class="col-3">
+                    <InputSelect class="form-select" @bind-Value="filtro">
+                        <option value="">Elija una opción</option>
+                        <option value="Id">Tecnico Id</option>
+                        <option value="Nombres">Nombres</option>
+                        <option value="SueldoHora">SueldoHora</option>
+                    </InputSelect>
+                </div>
+
+                <div class="col-4">
+                    <div class="input-group">
+                        <input class="form-control" @bind="valorFiltro" placeholder="Buscar" />
+                        <button type="button" class="btn btn-primary rounded-1 border-end border-primary bi bi-search" @onclick="Buscar">
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+            </div>
+              <table class="table table-hover table-bordered text-center mt-4">
+                <thead class="table table-striped text-black" >
+            <tr>
+                    <th class="fw-semibold">Tecnico Id</th>
+                    <th class="fw-semibold">Nombres</th>
+                    <th class="fw-semibold">Sueldo por Hora</th>
+                    <th class="fw-semibold">Editar</th>
+     
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var tecnico in tecnicos)
+                {
+                    <tr>
+                        <td>@tecnico.TecnicoId</td>
+                        <td>@tecnico.Nombres</td>
+                        <td>@tecnico.SueldoHora.ToString("C2", CultureInfo.CurrentCulture)</td>
+                        <td class="text-center">
+                                <a href="/Tecnico/Edit/@tecnico.TecnicoId" class="btn btn-outline-success bi bi-pencil-fill"></a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        </div>
+        <div class="card-footer d-flex justify-content-between">
+            <label><strong>Cantidad: @tecnicos.Count()</strong></label>
+            <label class="ms-auto"><strong>Total de Sueldos x Horas: @tecnicos.Sum(c => c.SueldoHora).ToString("C2", CultureInfo.CurrentCulture)</strong></label>
+        </div>
+    </div>
+</div>
+
+@code {
+    public List<Tecnicos> tecnicos = new List<Tecnicos>();
+    private string filtro = "";
+    private string valorFiltro = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTecnicos();
+    }
+
+    private async Task LoadTecnicos()
+    {
+        tecnicos = await tecnicoService.Listar(t => true);
+    }
+
+    private async Task Buscar()
+    {
+        if (!string.IsNullOrWhiteSpace(valorFiltro))
+        {
+            if (filtro == "Id" && int.TryParse(valorFiltro, out int TecnicoId))
+            {
+                tecnicos = await tecnicoService.Listar(t => t.TecnicoId == TecnicoId);
+            }
+            else if (filtro == "Nombre")
+            {
+                tecnicos = await tecnicoService.Listar(t => t.Nombres != null && t.Nombres.ToLower().Contains(valorFiltro.ToLower()));
+            }
+            else if (filtro == "SueldoHora" && float.TryParse(valorFiltro, out float SueldoHora))
+            {
+                tecnicos = await tecnicoService.Listar(t => t.SueldoHora == SueldoHora);
+            }
+        }
+        else
+        {
+            await LoadTecnicos();
+        }
+    }
+}
