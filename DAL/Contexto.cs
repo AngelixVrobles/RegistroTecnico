@@ -12,8 +12,9 @@ namespace RegistroTecnico.DAL
         public DbSet<Tecnicos> Tecnicos { get; set; }
         public DbSet<Clientes> Clientes { get; set; }
         public DbSet<Tickets> Tickets { get; set; }
-    
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+        public DbSet<Sistemas> Sistemas { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Tickets>()
                 .HasOne(t => t.Clientes)
