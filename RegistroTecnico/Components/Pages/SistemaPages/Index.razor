@@ -1,0 +1,177 @@
+﻿@page "/Sistema/Index"
+@rendermode InteractiveServer
+@inject SistemaServices sistemaService
+@inject NavigationManager navigation
+
+<PageTitle>Sistemas</PageTitle>
+
+<div class="container mt-3">
+    <div class="card shadow-lg">
+        <div class="card-header mb-1 text-center bg-primary text-white">
+            <h3 class="card-title m-1"><strong>Consulta de Sistemas</strong></h3>
+        </div>
+
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col-md-3">
+                    <label class="form-label"><strong>Filtrar por</strong></label>
+                    <InputSelect class="form-select" @bind-Value="filtro">
+                        <option value="" disabled selected>Elija una opción</option>
+                        <option value="Id">SistemaId</option>
+                        <option value="Descripcion">Descripción</option>
+                        <option value="Complejidad">Complejidad</option>
+                    </InputSelect>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label"><strong>Búsqueda</strong></label>
+                    <div class="input-group">
+                        <input class="form-control" @bind="valorFiltro" placeholder="Buscar" />
+                        <button type="button" class="btn btn-primary bi bi-search" @onclick="Buscar">
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-warning bi bi-arrow-clockwise" @onclick="Restablecer">
+                        Restablecer Filtros
+                    </button>
+                </div>
+
+                <div class="col-md-2 text-end">
+                    <a href="/Sistema/Create" class="btn btn-success">
+                        <span class="bi bi-plus-square"></span> Crear
+                    </a>
+                </div>
+            </div>
+
+            @if (SistemaFiltrada.Any())
+            {
+                <table class="table table-hover table-bordered text-center mt-4">
+                    <thead class="table-striped text-black">
+                        <tr>
+                            <th>Id</th>
+                            <th>Descripción</th>
+                            <th>Complejidad</th>
+                            <th>Editar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sistema in SistemaPaginada)
+                        {
+                            <tr>
+                                <td>@sistema.SistemasId</td>
+                                <td>@sistema.Descripcion</td>
+                                <td>@ObtenerNombreComplejidad(sistema.Complejidad)</td>
+                                <td>
+                                    <a href="/Sistema/Edit/@sistema.SistemasId" class="btn btn-outline-success bi bi-pencil-fill"></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-outline-secondary" @onclick="AnteriorPagina" disabled="@(!PuedeRetroceder)">Anterior</button>
+                    <span>Página @PaginaActual de @TotalPaginas</span>
+                    <button class="btn btn-outline-secondary" @onclick="SiguientePagina" disabled="@(!PuedeAvanzar)">Siguiente</button>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning text-center mt-4">No se encontraron resultados.</div>
+            }
+        </div>
+
+        <div class="card-footer d-flex justify-content-between">
+            <label><strong>Cantidad: @SistemaFiltrada.Count()</strong></label>
+        </div>
+    </div>
+</div>
+
+@code {
+    public List<Sistemas> Sistema = new();
+    public List<Sistemas> SistemaFiltrada = new();
+
+    private int PaginaActual = 1;
+    private int TamañoPagina = 10;
+
+    private IEnumerable<Sistemas> SistemaPaginada => SistemaFiltrada
+        .OrderByDescending(s => s.SistemasId)
+        .Skip((PaginaActual - 1) * TamañoPagina)
+        .Take(TamañoPagina);
+
+    private int TotalPaginas => (int)Math.Ceiling((double)SistemaFiltrada.Count / TamañoPagina);
+    private bool PuedeRetroceder => PaginaActual > 1;
+    private bool PuedeAvanzar => PaginaActual < TotalPaginas;
+
+    private string filtro = "";
+    private string valorFiltro = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Sistema = await sistemaService.Listar(t => true);
+        SistemaFiltrada = Sistema;
+    }
+
+    private async Task Buscar()
+    {
+        PaginaActual = 1;
+        if (!string.IsNullOrWhiteSpace(valorFiltro))
+        {
+            if (filtro == "Id" && int.TryParse(valorFiltro, out int SistemaId))
+            {
+                SistemaFiltrada = await sistemaService.Listar(s => s.SistemasId == SistemaId);
+            }
+            else if (filtro == "Descripcion")
+            {
+                SistemaFiltrada = await sistemaService.Listar(s => s.Descripcion.ToLower().Contains(valorFiltro.ToLower()));
+            }
+            else if (filtro == "Complejidad")
+            {
+                var complejidadTexto = valorFiltro.ToLower();
+                SistemaFiltrada = await sistemaService.Listar(s => ObtenerNombreComplejidad(s.Complejidad).ToLower().Contains(complejidadTexto));
+            }
+        }
+        else
+        {
+            SistemaFiltrada = await sistemaService.Listar(t => true);
+        }
+    }
+
+    private async Task Restablecer()
+    {
+        filtro = "";
+        valorFiltro = "";
+        PaginaActual = 1;
+        SistemaFiltrada = await sistemaService.Listar(t => true);
+    }
+
+    private string ObtenerNombreComplejidad(int valor)
+    {
+        return valor switch
+        {
+            1 => "Baja",
+            2 => "Media",
+            3 => "Alta",
+            _ => "Desconocida"
+        };
+    }
+
+    private void SiguientePagina()
+    {
+        if (PuedeAvanzar)
+        {
+            PaginaActual++;
+        }
+    }
+
+    private void AnteriorPagina()
+    {
+        if (PuedeRetroceder)
+        {
+            PaginaActual--;
+        }
+    }
+}
