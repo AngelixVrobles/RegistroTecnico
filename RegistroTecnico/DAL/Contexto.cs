@@ -28,6 +28,8 @@ namespace RegistroTecnico.DAL
                 .HasForeignKey(t => t.TecnicoId)
                 .OnDelete(DeleteBehavior.Restrict); // o NoAction
         }
+
+
     }
 }
 
